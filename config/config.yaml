@@ -1,0 +1,13 @@
+mysql:
+  host: localhost
+  port: 33067
+  username: root
+  password: root
+  database: NewSystem
+  charset: utf8mb4
+  parseTime: true
+redis:
+  host: localhost
+  port: 13001
+  password: ""
+  db: 0
