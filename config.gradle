@@ -1,0 +1,47 @@
+// config.gradle
+
+if (isRunAlone.toBoolean()) {
+    apply plugin: 'com.android.application'
+} else {
+    apply plugin: 'com.android.library'
+}
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'junit:junit:4.13.2'
+    implementation 'androidx.test.ext:junit:1.1.5'
+    implementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.11.0"))
+    //由于Retrofit是依赖于okhttp3，使用需要导入okhttp3的依赖包、
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    // Retrofit Gson转换库
+    implementation("com.squareup.retrofit2:converter-gson:2.6.1")
+}
+android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    defaultConfig {
+        sourceSets {
+            main {
+                // 单独调试与集成调试时使用不同的 AndroidManifest.xml 文件
+                if (isRunAlone.toBoolean()) {
+                    manifest.srcFile 'src/main/AndroidManifest.xml'
+                    java {
+                        //当此Module作为单独的Application运行时，加载 "src/component"路径下的文件
+                        srcDirs 'src/main'
+                    }
+                } else {
+                    manifest.srcFile 'src/main/manifest/AndroidManifest.xml'
+                }
+            }
+        }
+    }
+    viewBinding {
+        enable = true
+    }
+}
+

@@ -1,0 +1,38 @@
+apply from: rootProject.file('config.gradle')
+
+
+android {
+    namespace 'com.example.core_net_work'
+    compileSdk 33
+
+    defaultConfig {
+        if (isRunAlone.toBoolean()) {
+            applicationId "com.example.core_net_work"
+        }
+        minSdk 26
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    resourcePrefix "core_net_work_"
+
+}
+dependencies {
+    // Retrofit网络请求库
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.11.0"))
+    //由于Retrofit是依赖于okhttp3，使用需要导入okhttp3的依赖包、
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    // Retrofit Gson转换库
+    implementation("com.squareup.retrofit2:converter-gson:2.6.1")
+}
+
