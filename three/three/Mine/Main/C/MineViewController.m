@@ -17,6 +17,18 @@
 
 @implementation MineViewController
 
+- (void)viewWillAppear:(BOOL)animated {
+    if ([self.navigationController.tabBarController.title isEqualToString:@"KKK"]) {
+        self.TOKEN = @"";
+    } else {
+        if (![self.TOKEN isEqualToString:self.navigationController.tabBarController.title]) {
+            self.TOKEN = self.navigationController.tabBarController.title;
+            [self getUserInformationWithTOKEN:self.TOKEN];
+        }
+        [self.tableView reloadData];
+    }
+}
+
 - (void)loadTableView {
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.tableView.sectionFooterHeight = 4;
@@ -49,7 +61,7 @@
     if ([self.navigationController.tabBarController.title isEqualToString:@"KKK"]) {
         self.TOKEN = @"";
     } else {
-        
+        self.TOKEN = self.navigationController.tabBarController.title;
     }
 }
 
@@ -98,6 +110,31 @@
     } else {
         return 160;
     }
+}
+
+- (void)getUserInformationWithTOKEN:(NSString *)token {
+    NSURLComponents *urlComponents = [NSURLComponents componentsWithString:@"http://192.168.0.146:13000/user/get/info"];
+    NSMutableArray *queryItems = [NSMutableArray array];
+
+    // 创建要发送的JSON参数
+    NSString *str = [NSString stringWithFormat:@"Bearer %@", token];
+    NSURL *url = urlComponents.URL;
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.HTTPMethod = @"GET";
+    [request setValue:str forHTTPHeaderField:@"Authorization"];
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (error) {
+            NSLog(@"Failed to send request: %@", error);
+            return;
+        }
+        
+        // 处理响应数据
+        NSString *responseData = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSLog(@"Response: %@", responseData);
+    }];
+
+    [dataTask resume];
 }
 
 /*

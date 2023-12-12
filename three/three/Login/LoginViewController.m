@@ -30,6 +30,7 @@
 }
 
 - (void)codeLoginView {
+    self.mainTextField.placeholder = @"输入手机号";
     self.loginBtn.selected = NO;
     self.warnningLabel.text = @"";
     self.secureTextField.hidden = YES;
@@ -45,6 +46,7 @@
 }
 
 - (void)passwordLoginView {
+    self.mainTextField.placeholder = @"输入账号";
     self.loginBtn.selected = YES;
     self.warnningLabel.text = @"";
     self.secureTextField.hidden = NO;
@@ -59,6 +61,7 @@
 }
 
 - (void)registerView {
+    self.mainTextField.placeholder = @"输入手机号";
     self.warnningLabel.text = @"";
     self.secureTextField.hidden = NO;
     self.resecureTextField.hidden = NO;
@@ -230,20 +233,39 @@
             self.msg = [NSString stringWithFormat:@"！%@", dic[@"msg"]];
         } else {
             dispatch_async(dispatch_get_main_queue(), ^{
-                UIAlertController* alertView = [UIAlertController alertControllerWithTitle:nil
-                message:dic[@"msg"]
-                preferredStyle:UIAlertControllerStyleAlert];
+                if ([dic[@"msg"] isEqualToString:@"登录成功"]) {
+                    UIAlertController* alertView = [UIAlertController alertControllerWithTitle:dic[@"msg"]
+                    message:nil
+                    preferredStyle:UIAlertControllerStyleAlert];
 
-                
-                UIAlertAction* cancel = [UIAlertAction actionWithTitle:@"确定"
-                style:UIAlertActionStyleCancel handler:nil];
-                
-                [alertView addAction: cancel];
-                     
+                    
+                    UIAlertAction* cancel = [UIAlertAction actionWithTitle:@"确定"
+                    style:UIAlertActionStyleCancel handler:nil];
+                    
+                    [alertView addAction: cancel];
+                         
 
-                // 显示视图
-                [self presentViewController: alertView animated:YES
-                        completion:nil];
+                    // 显示视图
+                    [self presentViewController: alertView animated:YES
+                            completion:nil];
+                    self.navigationController.tabBarController.title = dic[@"data"][@"token"];
+                    NSLog(@"%@", self.navigationController.tabBarController.title);
+                } else if ([dic[@"msg"] isEqualToString:@"登录成功"]) {
+                    UIAlertController* alertView = [UIAlertController alertControllerWithTitle:dic[@"msg"]
+                    message:dic[@"data"]
+                    preferredStyle:UIAlertControllerStyleAlert];
+
+                    
+                    UIAlertAction* cancel = [UIAlertAction actionWithTitle:@"确定"
+                    style:UIAlertActionStyleCancel handler:nil];
+                    
+                    [alertView addAction: cancel];
+                         
+
+                    // 显示视图
+                    [self presentViewController: alertView animated:YES
+                            completion:nil];
+                }
             });
         }
         [self changeWarnLabel];
@@ -267,7 +289,7 @@
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
             self.warnningLabel.text = @"！手机号输入错误";
         } else {
-            NSDictionary *message = @{@"phone": self.mainTextField.text};
+            NSDictionary *message = @{@"phone_number": self.mainTextField.text};
             [self sendMessage:message withPurpose:@"send_phone_code"];
             self.codeBtn.selected = YES;
             self.countdownNum = 60;
@@ -302,19 +324,22 @@
     self.warnningLabel.text = @"";
     if ([btn.titleLabel.text isEqualToString:@"登录"]) {
         if (self.mainTextField.text.length) {
-            if (self.mainTextField.text.length != 11) {
-                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
-                self.warnningLabel.text = @"！手机号输入错误";
-            } else if (self.loginBtn.selected) {
-                if (self.secureTextField.text.length) {
-                    NSDictionary *message = @{@"phone_number":self.mainTextField.text, @"password":self.secureTextField.text};
+            if (self.loginBtn.selected) {
+                if (self.mainTextField.text.length != 11) {
+                    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+                    self.warnningLabel.text = @"！账号输入错误";
+                } else if (self.secureTextField.text.length) {
+                    NSDictionary *message = @{@"account":self.mainTextField.text, @"password":self.secureTextField.text};
                     [self sendMessage:message withPurpose:@"user/login/password"];
                 } else {
                     AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
                     self.warnningLabel.text = @"！密码不能为空";
                 }
             } else {
-                if (self.subTextField.text.length) {
+                if (self.mainTextField.text.length != 11) {
+                    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+                    self.warnningLabel.text = @"！手机号输入错误";
+                } else if (self.subTextField.text.length) {
                     NSDictionary *message = @{@"phone_number":self.mainTextField.text, @"verification_code":self.subTextField.text};
                     [self sendMessage:message withPurpose:@"user/login/phone"];
                 } else {
@@ -324,7 +349,11 @@
             }
         } else {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
-            self.warnningLabel.text = @"！手机号不能为空";
+            if (self.loginBtn.selected) {
+                self.warnningLabel.text = @"！账号不能为空";
+            } else {
+                self.warnningLabel.text = @"！手机号不能为空";
+            }
         }
     } else {
         if (self.mainTextField.text.length) {

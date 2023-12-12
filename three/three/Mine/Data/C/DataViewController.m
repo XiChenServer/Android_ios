@@ -7,6 +7,10 @@
 
 #import "DataViewController.h"
 #import "AlterViewController.h"
+#import <AVFoundation/AVFoundation.h>
+#import <MobileCoreServices/MobileCoreServices.h>
+#import <MediaPlayer/MediaPlayer.h>
+#import <AVKit/AVKit.h>
 
 @interface DataViewController ()
 
@@ -48,10 +52,29 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath: indexPath animated: YES];
+    if (indexPath.section == 0 && indexPath.row == 0) {
+        UIImagePickerController *cameraPicker = [[UIImagePickerController alloc] init];
+        cameraPicker.delegate = self;
+        cameraPicker.allowsEditing = YES;
+        cameraPicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+              //跳转到UIImagePickerController控制器弹出相册
+        cameraPicker.modalPresentationStyle = UIModalPresentationFullScreen;
+        cameraPicker.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
+        [self presentViewController:cameraPicker animated:YES completion:nil];
+        return;
+    }
+    if (indexPath.section == 2 && indexPath.row == 0) {
+        
+        return;;
+    }
     AlterViewController *alter = [[AlterViewController alloc] init];
     alter.row = indexPath.section*10 + indexPath.row;
     [self.navigationController pushViewController:alter animated:YES];
     
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
+    [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
