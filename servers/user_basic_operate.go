@@ -10,14 +10,6 @@ import (
 	"net/http"
 )
 
-type AddressEntry struct {
-	Street   string `json:"street"`    // 街道
-	City     string `json:"city"`      // 城市
-	Country  string `json:"country"`   // 国家
-	Province string `json:"province"`  // 省份
-	Contact  string `json:"contact"`   // 联系人及其信息
-	PostCode string `json:"post_code"` // 邮件地址
-}
 type User struct {
 	Avatar           string         `json:"avatar"`            // 头像链接
 	UserIdentity     string         `json:"user_identity"`     // 用户身份信息
@@ -626,6 +618,25 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 	})
 	return
 }
+
+// UserModifyInfo 是一个Swagger文档化的函数，用于修改用户信息
+// @Summary 修改用户信息
+// @Description 根据提供的JSON请求体修改用户信息
+// @Tag 用户私有方法
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer {token}" default
+// @Param user body User true "需要修改的用户信息"
+// @Param VerificationCode formData string false "验证码" maxlength(6) "验证码"
+// @Success 200 {string} json {"code":200,"msg":"修改信息成功"}
+// @Failure 400 {string} json {"code":400,"msg":"请求无效。服务器无法理解请求"}
+// @Failure 401 {string} json {"code":401,"msg":"未授权"}
+// @Failure 403 {string} json {"code":403,"msg":"请求错误"}
+// @Failure 404 {string} json {"code":404,"msg":"该账号没有被注册"}
+// @Failure 409 {string} json {"code":409,"msg":"请求错误"}
+// @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
+// @Router /user/modify/info [post]
 func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 	var user User
 	// 使用 ShouldBindJSON 解析 JSON 请求体
@@ -673,10 +684,29 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
 		return
 	}
+	if user.Email != existsuser.Email {
+		code, err := dao.RDB.Get(c, user.PhoneNumber).Result()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code": 500,
+				"msg":  "验证码没有发送",
+			})
+			return
+		}
+		if code != user.VerificationCode {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code": 400,
+				"msg":  "验证码错误",
+			})
+			return
+		}
+		existsuser.Email = user.Email
+	}
 	existsuser.Password = user.Password
 	existsuser.Name = user.Name
 	existsuser.NickName = user.NickName
 	existsuser.WechatNumber = user.WechatNumber
+	existsuser.Email = user.Email
 	if err = existsuser.SaveUser(existsuser); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -687,6 +717,88 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "修改信息成功",
+	})
+	return
+}
+
+// UserChangesMobilePhoneNumber 更换用户手机号
+// @Summary 更换用户手机号
+// @Description 根据用户身份标识更换用户的手机号码。
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param phone_number formData string true "要更换的手机号码"
+// @Param verification_code formData string true "验证码"
+// @Success 200 {string} json {"code": 200, "msg": "手机号更换成功"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求无效。服务器无法理解请求"}
+// @Failure 401 {string} json {"code": 401, "msg": "未授权"}
+// @Failure 403 {string} json {"code": 403, "msg": "禁止访问"}
+// @Failure 404 {string} json {"code": 404, "msg": "未找到资源"}
+// @Failure 409 {string} json {"code": 409, "msg": "该账号没有被注册"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/changes/mobile/phone [post]
+func (BasicOperateUser) UserChangesMobilePhoneNumber(c *gin.Context) {
+	phone_number := c.PostForm("phone_number")
+	verification_code := c.PostForm("verification_code")
+	// 解析用户信息
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 使用 userClaims 中的信息获取文件名等等
+	exists, existsuser, err := models.UserBasic{}.FindUserByAccount(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if !exists {
+		// 用户已经存在，你可以通过 existingUser 使用用户信息
+		c.JSON(http.StatusConflict, gin.H{
+			"code": "409",
+			"msg":  "该账号没有被注册",
+		})
+		return
+	}
+	code, err := dao.RDB.Get(c, phone_number).Result()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "验证码没有发送",
+		})
+		return
+	}
+	if code != verification_code {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "验证码错误",
+		})
+		return
+	}
+	existsuser.PhoneNumber = phone_number
+	// 这里可能需要判断保存是否成功，如果不成功再返回错误
+	if err := existsuser.SaveUser(existsuser); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": "200",
+		"msg":  "手机号更换成功",
 	})
 	return
 }

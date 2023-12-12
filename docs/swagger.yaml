@@ -10,6 +10,9 @@ definitions:
       country:
         description: 国家
         type: string
+      identity:
+        description: 唯一标识
+        type: string
       post_code:
         description: 邮件地址
         type: string
@@ -22,7 +25,9 @@ definitions:
     type: object
   servers.Basic:
     properties:
-      phone:
+      email:
+        type: string
+      phone_number:
         type: string
     type: object
   servers.User:
@@ -81,6 +86,33 @@ info:
   title: 淘牛马
   version: "1.0"
 paths:
+  /send_email_code:
+    post:
+      description: Send an email verification code to the specified email address
+      parameters:
+      - description: Email address to send the verification code to
+        in: formData
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"验证码已经成功发送"}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"请求参数错误"}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 发送邮箱验证码
+      tags:
+      - 公共方法
   /send_phone_code:
     post:
       consumes:
@@ -111,6 +143,54 @@ paths:
       summary: 发送手机验证码
       tags:
       - 公共方法
+  /user/delete/address:
+    post:
+      description: 根据用户身份标识删除用户的地址信息。
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 要删除的地址身份标识
+        in: formData
+        name: identity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "地址删除成功"}'
+          schema:
+            type: string
+        "400":
+          description: 'code": 400, "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: string
+        "403":
+          description: 'code": 403, "msg": "禁止访问"}'
+          schema:
+            type: string
+        "404":
+          description: 'code": 404, "msg": "未找到资源"}'
+          schema:
+            type: string
+        "409":
+          description: 'code": 409, "msg": "该账号没有被注册"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 删除用户地址
+      tags:
+      - 用户私有方法
   /user/get/avatar:
     get:
       consumes:
@@ -300,6 +380,62 @@ paths:
       summary: 用户登录（使用手机号和密码）
       tags:
       - 用户方法
+  /user/modify/info:
+    post:
+      consumes:
+      - application/json
+      description: 根据提供的JSON请求体修改用户信息
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 需要修改的用户信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/servers.User'
+      - description: 验证码
+        in: formData
+        maxLength: 6
+        name: VerificationCode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"修改信息成功"}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"请求无效。服务器无法理解请求"}
+          schema:
+            type: string
+        "401":
+          description: code":401,"msg":"未授权"}
+          schema:
+            type: string
+        "403":
+          description: code":403,"msg":"请求错误"}
+          schema:
+            type: string
+        "404":
+          description: code":404,"msg":"该账号没有被注册"}
+          schema:
+            type: string
+        "409":
+          description: code":409,"msg":"请求错误"}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 修改用户信息
   /user/register/phone:
     post:
       consumes:
@@ -335,6 +471,49 @@ paths:
       summary: 用户注册
       tags:
       - 用户方法
+  /user/upload/address:
+    post:
+      consumes:
+      - application/json
+      description: 通过解析用户信息和JSON请求体，将地址信息上传到用户信息中。
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 要上传的地址信息,identity是不需要填写的，post_code可以写，也可以不写
+        in: body
+        name: address
+        required: true
+        schema:
+          $ref: '#/definitions/servers.AddressEntry'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "地址添加成功"}'
+          schema:
+            type: string
+        "400":
+          description: 'code": 400, "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: string
+        "409":
+          description: 'code": 409, "msg": "该账号没有被注册"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 向用户上传地址信息
+      tags:
+      - 用户私有方法
   /user/uploads/avatar:
     post:
       consumes:

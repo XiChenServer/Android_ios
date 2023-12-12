@@ -15,6 +15,7 @@ func Router() *gin.Engine {
 	r.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("/send_phone_code", servers.BasicServer{}.SendPhoneCode)
+	r.POST("/send_email_code", servers.BasicServer{}.SendEmailCode)
 
 	r.POST("/user/register/phone", servers.BasicOperateUser{}.UserRegisterByPhone)
 
@@ -24,11 +25,14 @@ func Router() *gin.Engine {
 
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
+		user.POST("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
+		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
 		user.POST("/uploads/avatar", servers.BasicOperateUser{}.UserUploadsAvatar)
+		user.POST("/delete/address", servers.BasicOperateUser{}.UserDeleteAddress)
+		user.POST("/changes/mobile/phone", servers.BasicOperateUser{}.UserChangesMobilePhoneNumber)
 		user.GET("/get/avatar", servers.BasicOperateUser{}.UserGetAvatar)
 		user.GET("/get/info", servers.BasicOperateUser{}.UserGetInfo)
 	}
-
 	return r
 }
 

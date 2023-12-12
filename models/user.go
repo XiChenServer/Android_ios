@@ -2,6 +2,8 @@ package models
 
 import (
 	"Android_ios/dao"
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
 	"log"
@@ -14,19 +16,41 @@ type AddressEntry struct {
 	Province string `json:"province"`
 	Contact  string `json:"contact"`
 	PostCode string `json:"post_code"`
+	Identity string `json:"identity"`
 }
+
+type JSONAddress []AddressEntry
+
+func (ja *JSONAddress) Scan(value interface{}) error {
+	if value == nil {
+		return errors.New("value is nil")
+	}
+	switch v := value.(type) {
+	case []byte:
+		return json.Unmarshal(v, ja)
+	case string:
+		return json.Unmarshal([]byte(v), ja)
+	default:
+		return errors.New("unsupported type")
+	}
+}
+
+func (ja JSONAddress) Value() (driver.Value, error) {
+	return json.Marshal(ja)
+}
+
 type UserBasic struct {
-	Avatar       string         `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
-	UserIdentity string         `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
-	NickName     string         `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
-	Account      string         `gorm:"column:account;type:varchar(11);" json:"account"`
-	Password     string         `gorm:"column:password;type:varchar(255);" json:"password"`
-	PhoneNumber  string         `gorm:"column:phone_number;type:varchar(16);" json:"phone_number"`
-	Email        string         `gorm:"column:email;type:varchar(24);" json:"email"`
-	WechatNumber string         `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
-	Address      []AddressEntry `gorm:"column:address;type:json;" json:"address"`
-	Score        int            `gorm:"column:score;type:int;" json:"score"`
-	Name         string         `gorm:"column:name;type:varchar(24);" json:"name"`
+	Avatar       string      `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
+	UserIdentity string      `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
+	NickName     string      `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
+	Account      string      `gorm:"column:account;type:varchar(11);" json:"account"`
+	Password     string      `gorm:"column:password;type:varchar(255);" json:"password"`
+	PhoneNumber  string      `gorm:"column:phone_number;type:varchar(16);" json:"phone_number"`
+	Email        string      `gorm:"column:email;type:varchar(24);" json:"email"`
+	WechatNumber string      `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
+	Address      JSONAddress `gorm:"column:address;type:json;" json:"address"`
+	Score        int         `gorm:"column:score;type:int;" json:"score"`
+	Name         string      `gorm:"column:name;type:varchar(24);" json:"name"`
 }
 
 func (UserBasic) Table() string {

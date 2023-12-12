@@ -24,6 +24,47 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/send_email_code": {
+            "post": {
+                "description": "Send an email verification code to the specified email address",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "公共方法"
+                ],
+                "summary": "发送邮箱验证码",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email address to send the verification code to",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"验证码已经成功发送\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\":400,\"msg\":\"请求参数错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\":500,\"msg\":\"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/send_phone_code": {
             "post": {
                 "description": "向指定手机号发送验证码。",
@@ -63,6 +104,78 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "code\":500,\"msg\":\"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/delete/address": {
+            "post": {
+                "description": "根据用户身份标识删除用户的地址信息。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "删除用户地址",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "要删除的地址身份标识",
+                        "name": "identity",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"地址删除成功\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "code\": 403, \"msg\": \"禁止访问\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": 404, \"msg\": \"未找到资源\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "code\": 409, \"msg\": \"该账号没有被注册\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
                         "schema": {
                             "type": "string"
                         }
@@ -361,6 +474,92 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/modify/info": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据提供的JSON请求体修改用户信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "修改用户信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "需要修改的用户信息",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/servers.User"
+                        }
+                    },
+                    {
+                        "maxLength": 6,
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "VerificationCode",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"修改信息成功\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\":400,\"msg\":\"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\":401,\"msg\":\"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "code\":403,\"msg\":\"请求错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\":404,\"msg\":\"该账号没有被注册\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "code\":409,\"msg\":\"请求错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\":500,\"msg\":\"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/register/phone": {
             "post": {
                 "description": "用户通过手机号进行注册，如果手机号已存在或验证码错误将返回相应的错误信息。",
@@ -406,6 +605,71 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/upload/address": {
+            "post": {
+                "description": "通过解析用户信息和JSON请求体，将地址信息上传到用户信息中。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "向用户上传地址信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "要上传的地址信息,identity是不需要填写的，post_code可以写，也可以不写",
+                        "name": "address",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/servers.AddressEntry"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"地址添加成功\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "code\": 409, \"msg\": \"该账号没有被注册\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
                         "schema": {
                             "type": "string"
                         }
@@ -504,6 +768,10 @@ const docTemplate = `{
                     "description": "国家",
                     "type": "string"
                 },
+                "identity": {
+                    "description": "唯一标识",
+                    "type": "string"
+                },
                 "post_code": {
                     "description": "邮件地址",
                     "type": "string"
@@ -521,7 +789,10 @@ const docTemplate = `{
         "servers.Basic": {
             "type": "object",
             "properties": {
-                "phone": {
+                "email": {
+                    "type": "string"
+                },
+                "phone_number": {
                     "type": "string"
                 }
             }
