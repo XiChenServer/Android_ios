@@ -3,7 +3,7 @@ mysql:
   port: 33067
   username: root
   password: root
-  database: NewSystem
+  database: android_ios
   charset: utf8mb4
   parseTime: true
 redis:

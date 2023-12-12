@@ -7,6 +7,8 @@ import (
 	dysmsapi20170525 "github.com/alibabacloud-go/dysmsapi-20170525/v3/client"
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"io"
 	"strings"
 )
 
@@ -19,6 +21,9 @@ import (
  */
 var AccessKeyID = "LTAI5tQdpsht36XJqYZevPGn"
 var AccessKeySecret = "dyThns69pEwBcGl1AjBby1YsGEyDcm"
+
+var endpoint = "https://oss-cn-beijing.aliyuncs.com"
+var bucketName = "xichen-server"
 
 func CreateClient(accessKeyId *string, accessKeySecret *string) (_result *dysmsapi20170525.Client, _err error) {
 	config := &openapi.Config{
@@ -87,4 +92,51 @@ func SendPhoneCode(phone, code string) error {
 		}
 	}
 	return nil
+}
+
+// UploadAvatarFromForm 从表单文件上传到阿里云 OSS
+func UploadAvatarFromForm(fileName string, file io.Reader) error {
+	// 打开本地文件
+
+	// 创建阿里云 OSS 客户端
+	client, err := oss.New(endpoint, AccessKeyID, AccessKeySecret)
+	if err != nil {
+		panic(err)
+	}
+
+	// 获取存储空间
+	bucket, err := client.Bucket(bucketName)
+	if err != nil {
+		panic(err)
+	}
+
+	// 上传文件到 OSS
+	err = bucket.PutObject(fileName, file)
+	if err != nil {
+		panic(err)
+	}
+	return err
+}
+
+// DownAvatarFromOSS 从阿里云OSS获取头像
+func DownAvatarFromOSS(fileName string) (io.ReadCloser, error) {
+	// 创建阿里云 OSS 客户端
+	client, err := oss.New(endpoint, AccessKeyID, AccessKeySecret)
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取存储空间
+	bucket, err := client.Bucket(bucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	// 下载文件
+	fileReader, err := bucket.GetObject(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return fileReader, nil
 }

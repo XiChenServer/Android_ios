@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+var DB = newDB()
 
 type MySQLConfig struct {
 	Host      string
@@ -19,7 +19,7 @@ type MySQLConfig struct {
 	ParseTime bool
 }
 
-func NewDB() {
+func newDB() *gorm.DB {
 	// 设置 Viper 的配置文件名和路径
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -51,5 +51,5 @@ func NewDB() {
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 	}
-	DB = db
+	return db
 }

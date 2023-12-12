@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
-	"strconv"
 )
 
-var RDB *redis.Client
+var RDB = newRDB()
 
 type RedisConfig struct {
 	Host     string
@@ -16,7 +15,7 @@ type RedisConfig struct {
 	DB       int
 }
 
-func NewRDB() {
+func newRDB() *redis.Client {
 	// 设置 Viper 的配置文件名和路径
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -37,9 +36,9 @@ func NewRDB() {
 	fmt.Printf("Redis Config: %+v\n", redisConfig)
 	// 初始化 redis 连接
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisConfig.Host + strconv.Itoa(redisConfig.Port),
+		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
 		Password: redisConfig.Password,
 		DB:       redisConfig.DB,
 	})
-	RDB = rdb
+	return rdb
 }

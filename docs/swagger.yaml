@@ -1,0 +1,386 @@
+definitions:
+  servers.AddressEntry:
+    properties:
+      city:
+        description: 城市
+        type: string
+      contact:
+        description: 联系人及其信息
+        type: string
+      country:
+        description: 国家
+        type: string
+      post_code:
+        description: 邮件地址
+        type: string
+      province:
+        description: 省份
+        type: string
+      street:
+        description: 街道
+        type: string
+    type: object
+  servers.Basic:
+    properties:
+      phone:
+        type: string
+    type: object
+  servers.User:
+    properties:
+      account:
+        description: 账号
+        type: string
+      address:
+        description: 地址列表
+        items:
+          $ref: '#/definitions/servers.AddressEntry'
+        type: array
+      avatar:
+        description: 头像链接
+        type: string
+      email:
+        description: 电子邮件
+        type: string
+      file_base64:
+        type: string
+      name:
+        type: string
+      nickname:
+        description: 昵称
+        type: string
+      password:
+        description: 密码
+        type: string
+      phone_number:
+        description: 电话号码
+        type: string
+      score:
+        description: 评分
+        type: integer
+      user_identity:
+        description: 用户身份信息
+        type: string
+      verification_code:
+        description: 验证码
+        type: string
+      wechat_number:
+        description: 微信号
+        type: string
+    type: object
+host: 192.168.0.146:13000
+info:
+  contact:
+    email: support@swagger.io
+    name: phone_number 15294440097
+    url: http://www.swagger.io/support
+  description: 用于家畜交易
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: 淘牛马
+  version: "1.0"
+paths:
+  /send_phone_code:
+    post:
+      consumes:
+      - application/json
+      description: 向指定手机号发送验证码。
+      parameters:
+      - description: 接收验证码的手机号
+        in: body
+        name: phone
+        required: true
+        schema:
+          $ref: '#/definitions/servers.Basic'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: code":201,"msg":"验证码已经成功发送"}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"请求无效。服务器无法理解请求"}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 发送手机验证码
+      tags:
+      - 公共方法
+  /user/get/avatar:
+    get:
+      consumes:
+      - application/json
+      description: 从阿里云服务器获取用户头像，需要提供有效的用户身份验证令牌。
+      parameters:
+      - default: "123"
+        description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: 'code": 400, "msg": "请求错误"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: string
+        "403":
+          description: 'code": 403, "msg": "禁止访问"}'
+          schema:
+            type: string
+        "404":
+          description: 'code": 404, "msg": "文件不存在"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户头像
+      tags:
+      - 用户私有方法
+  /user/get/info:
+    get:
+      consumes:
+      - application/json
+      description: 解析用户信息，验证用户身份，并返回用户信息。
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "获取信息成功", "data": {用户信息}}'
+          schema:
+            type: json
+        "400":
+          description: 'code": 400, "msg": "请求错误"}'
+          schema:
+            type: json
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: json
+        "404":
+          description: 'code": 404, "msg": "用户不存在"}'
+          schema:
+            type: json
+        "409":
+          description: 'code": 409, "msg": "该账号没有被注册"}'
+          schema:
+            type: json
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: json
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户信息
+      tags:
+      - 用户私有方法
+  /user/login/password:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过账号和密码进行登录，如果账号未注册、密码错误或其他错误将返回相应的错误信息。
+      parameters:
+      - description: 用户信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/servers.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "登录成功", "data": {"token": "用户token"}}'
+          schema:
+            type: string
+        "400":
+          description: 'code": "400", "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "409":
+          description: 'code": "409", "msg": "该账号没有被注册"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 用户登录（密码）
+      tags:
+      - 用户方法
+  /user/login/phone:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过手机号和验证码进行登录，如果手机号未注册、验证码错误或其他错误将返回相应的错误信息。
+      parameters:
+      - description: 用户信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/servers.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "登录成功", "data": {"token": "用户token"}}'
+          schema:
+            type: string
+        "400":
+          description: 'code": "400", "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "409":
+          description: 'code": "409", "msg": "该手机号没有被注册"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 用户登录（验证码）
+      tags:
+      - 用户方法
+  /user/login/phone_and_password:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过手机号和密码进行登录
+      parameters:
+      - description: 用户信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/servers.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"code": "200", "msg": "登录成功", "data": {"token": "jwt_token_here"}}'
+          schema:
+            type: json
+        "400":
+          description: '{"code": 400, "msg": "手机号或密码错误"}'
+          schema:
+            type: json
+        "401":
+          description: '{"code": 401, "msg": "该手机号没有被注册"}'
+          schema:
+            type: json
+        "500":
+          description: '{"code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: json
+      summary: 用户登录（使用手机号和密码）
+      tags:
+      - 用户方法
+  /user/register/phone:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过手机号进行注册，如果手机号已存在或验证码错误将返回相应的错误信息。
+      parameters:
+      - description: 用户信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/servers.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "注册成功", "data": {"nickname": "用户昵称",
+            "account": "用户账号": ""}}'
+          schema:
+            type: string
+        "400":
+          description: 'code": "400", "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "409":
+          description: 'code": "409", "msg": "该手机号已经注册"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 用户注册
+      tags:
+      - 用户方法
+  /user/uploads/avatar:
+    post:
+      consumes:
+      - application/json
+      description: 处理用户上传头像的请求，需要提供有效的用户身份验证令牌。
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户头像文件
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "文件上传成功"}'
+          schema:
+            type: string
+        "400":
+          description: 'code": 400, "msg": "请求错误"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: string
+        "403":
+          description: 'code": 403, "msg": "禁止访问"}'
+          schema:
+            type: string
+        "413":
+          description: 'code": 413, "msg": "文件大小超出限制"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 上传用户头像
+      tags:
+      - 用户私有方法
+swagger: "2.0"
