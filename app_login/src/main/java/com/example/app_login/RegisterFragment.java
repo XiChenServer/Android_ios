@@ -85,64 +85,83 @@ public class RegisterFragment extends Fragment {
                 public void onClick(View v) {
                     //对信息进行判断
                     if (!binding.etCode.getText().toString().equals("") && !binding.etPsswrd.getText().toString().equals("") && !binding.etPsswrdToo.getText().toString().equals("") && !binding.etPhone.getText().toString().equals("") && binding.etPsswrdToo.getText().toString().equals(binding.etPsswrdToo.getText().toString())) {
-                        MyRetrofit.serviceAPI.register(new RegisterRequest(binding.etPhone.getText().toString(), binding.etPsswrd.getText().toString(), String.valueOf(binding.btnCode).toString())).enqueue(new Callback<RegisterResult>() {
+                        binding.register.setVisibility(View.GONE);
+                        binding.progressRegisterBar.setVisibility(View.VISIBLE);
+                        MyRetrofit.serviceAPI.register(new RegisterRequest(binding.etPhone.getText().toString(), binding.etPsswrd.getText().toString(), binding.etCode.getText().toString())).enqueue(new Callback<RegisterResult>() {
                             @Override
                             public void onResponse(Call<RegisterResult> call, Response<RegisterResult> response) {
-//                                if (response.isSuccessful()) {
-                                if (response.body() == null) {
-                                    Log.d("IsThereProblem", "返回值为空");
+                                binding.progressRegisterBar.setVisibility(View.GONE);
+                                binding.register.setVisibility(View.VISIBLE);
+                                if (response.isSuccessful()) {
+                                    Log.d("IsThereProblem", response.body().getMsg());
+                                    Toast.makeText(getActivity(), "注册成功:", Toast.LENGTH_SHORT).show();
                                 } else {
-                                    Log.d("IsThereProblem", "返回值不为空");
+                                    Toast.makeText(getActivity(), "出问题了呢", Toast.LENGTH_SHORT).show();
+                                    binding.etPhone.setText("");
+                                    binding.etCode.setText("");
+                                    binding.etPsswrdToo.setText("");
+                                    binding.etPsswrd.setText("");
                                 }
-                                Toast.makeText(getActivity(), "注册成功:", Toast.LENGTH_SHORT).show();
-                                Log.d("IsThereProblem", response.body().getMsg());
-                                TabLayout tabLayout = getActivity().findViewById(R.id.tl);
-                                TabLayout.Tab tab = tabLayout.getTabAt(0);
-                                tab.select();
-//                                }
                             }
 
                             @Override
                             public void onFailure(Call<RegisterResult> call, Throwable t) {
+                                binding.progressRegisterBar.setVisibility(View.GONE);
+                                binding.register.setVisibility(View.VISIBLE);
                                 Log.d("IsThereProblem", t.toString());
-                                Toast.makeText(getActivity(), "注册失败", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getActivity(), "错误", Toast.LENGTH_SHORT).show();
+                                binding.etPhone.setText("");
+                                binding.etCode.setText("");
+                                binding.etPsswrdToo.setText("");
+                                binding.etPsswrd.setText("");
                             }
                         });
                     } else {
-                        Toast.makeText(getActivity(), "信息有误", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "请完善信息", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
             binding.btnCode.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
                     if (!binding.etPhone.getText().toString().equals("")) {
+                        binding.btnCode.setVisibility(View.GONE);
+                        binding.progressBar.setVisibility(View.VISIBLE);
                         Log.d("IsThereProblem", binding.etPhone.getText().toString());
                         binding.btnCode.setEnabled(false);
-                        countDownTimer = new CountDownTimer(60000, 1000) {
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                                // 更新按钮上显示的文本，显示剩余时间
-                                binding.btnCode.setText("(" + millisUntilFinished / 1000 + "秒)");
-                            }
 
-                            @Override
-                            public void onFinish() {
-                                // 倒计时结束，启用按钮并重置文本
-                                binding.btnCode.setEnabled(true);
-                                binding.btnCode.setText("获取验证码");
-                            }
-                        }.start();
                         MyRetrofit.serviceAPI.getCode(new CodeRequest(binding.etPhone.getText().toString())).enqueue(new Callback<CodeResult>() {
                             @Override
                             public void onResponse(Call<CodeResult> call, Response<CodeResult> response) {
+                                binding.progressBar.setVisibility(View.GONE);
+                                binding.btnCode.setVisibility(View.VISIBLE);
 //                                Toast.makeText(getActivity(), "Code : " + String.valueOf(response.body().getCode()), Toast.LENGTH_SHORT).show();
+                                countDownTimer = new CountDownTimer(60000, 1000) {
+                                    @Override
+                                    public void onTick(long millisUntilFinished) {
+                                        // 更新按钮上显示的文本，显示剩余时间
+                                        binding.btnCode.setText("(" + millisUntilFinished / 1000 + "秒)");
+                                    }
+
+                                    @Override
+                                    public void onFinish() {
+                                        // 倒计时结束，启用按钮并重置文本
+                                        binding.btnCode.setEnabled(true);
+                                        binding.btnCode.setText("验证码");
+                                    }
+                                }.start();
                                 Toast.makeText(getActivity(), "msg : " + String.valueOf(response.body().getMsg()), Toast.LENGTH_SHORT).show();
                             }
 
                             @Override
                             public void onFailure(Call<CodeResult> call, Throwable t) {
-                                Log.d("IsThereProblem", t.toString());
+                                Toast.makeText(getActivity(), "网络崩溃了呢", Toast.LENGTH_SHORT).show();
+//                                Log.d("IsThereProblem", t.toString());
+                                binding.progressBar.setVisibility(View.GONE);
+                                binding.btnCode.setVisibility(View.VISIBLE);
+                                binding.btnCode.setEnabled(true);
+//                                binding.btnCode.setText("验证码");
                             }
                         });
                     } else {

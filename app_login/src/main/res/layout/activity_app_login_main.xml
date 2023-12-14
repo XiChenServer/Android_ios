@@ -3,19 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/transparent">
+    android:layout_height="match_parent">
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/beauty" />
+        android:src="@drawable/cloud" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-
 
         tools:context=".AppLoginMainActivity">
 
@@ -23,23 +21,21 @@
             android:id="@+id/tl"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginTop="200dp"
+            android:layout_marginTop="180dp"
             android:background="@drawable/shape_custom_tab"
             android:elevation="1dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tabIndicator="@drawable/inicator"
-            app:tabIndicatorColor="#DDDDDD"
+            app:tabIndicatorColor="#50DDDDDD"
             app:tabIndicatorFullWidth="true"
             app:tabIndicatorGravity="center"
-
             app:tabRippleColor="@null" />
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/vp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
             app:layout_constraintTop_toBottomOf="@id/tl" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
