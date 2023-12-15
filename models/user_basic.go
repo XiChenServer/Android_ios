@@ -10,7 +10,7 @@ import (
 )
 
 type AddressEntry struct {
-	Street   string `json:"street"`
+	Street   string `json:"c"`
 	City     string `json:"city"`
 	Country  string `json:"country"`
 	Province string `json:"province"`
@@ -40,20 +40,25 @@ func (ja JSONAddress) Value() (driver.Value, error) {
 }
 
 type UserBasic struct {
-	Avatar       string      `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
-	UserIdentity string      `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
-	NickName     string      `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
-	Account      string      `gorm:"column:account;type:varchar(11);" json:"account"`
-	Password     string      `gorm:"column:password;type:varchar(255);" json:"password"`
-	PhoneNumber  string      `gorm:"column:phone_number;type:varchar(16);" json:"phone_number"`
-	Email        string      `gorm:"column:email;type:varchar(24);" json:"email"`
-	WechatNumber string      `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
-	Address      JSONAddress `gorm:"column:address;type:json;" json:"address"`
-	Score        int         `gorm:"column:score;type:int;" json:"score"`
-	Name         string      `gorm:"column:name;type:varchar(24);" json:"name"`
+	gorm.Model
+	Avatar               string            `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
+	UserIdentity         string            `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
+	NickName             string            `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
+	Account              string            `gorm:"column:account;type:varchar(11);" json:"account"`
+	Password             string            `gorm:"column:password;type:varchar(255);" json:"password"`
+	PhoneNumber          string            `gorm:"column:phone_number;type:varchar(16);" json:"phone_number"`
+	Email                string            `gorm:"column:email;type:varchar(24);" json:"email"`
+	WechatNumber         string            `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
+	Address              JSONAddress       `gorm:"column:address;type:json;" json:"address"`
+	Score                float32           `gorm:"column:score;type:decimal(10,2);" json:"score"`
+	Name                 string            `gorm:"column:name;type:varchar(24);" json:"name"`
+	Commodity            []*CommodityBasic `gorm:"foreignKey:CommodityIdentity;references:UserIdentity"`
+	LikedCommodities     []*CommodityBasic `gorm:"many2many:liked_commodity;foreignKey:UserIdentity;joinForeignKey:LikedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
+	CollectedCommodities []*CommodityBasic `gorm:"many2many:collected_commodity;foreignKey:UserIdentity;joinForeignKey:CollectedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
+	VerificationCode     string            `gorm:"column:verification_code;type:varchar(24)" json:"verification_code"`
 }
 
-func (UserBasic) Table() string {
+func (UserBasic) TableName() string {
 	return "user_basic"
 }
 
@@ -123,9 +128,13 @@ func (UserBasic) FindUserByAccountAndPassword(account string) (bool, *UserBasic,
 	// 找到记录
 	return true, &user, nil
 }
-func (UserBasic) FindUserByPhoneAndPassword(phone string) (bool, *UserBasic, error) {
+func (UserBasic) FindUserByPhoneAndPassword(phone, password string) (bool, *UserBasic, error) {
 	var user UserBasic
-	result := dao.DB.Where("phone_number = ?", phone).
+	result := dao.DB.Where("phone_number = ? AND password = ?", phone, password).
+		//Preload("kind_basic").
+		//Preload("Commodity").
+		//Preload("LikedCommodities").
+		//Preload("CollectedCommodities").
 		First(&user)
 
 	if result.Error != nil {

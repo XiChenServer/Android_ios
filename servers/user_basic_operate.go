@@ -291,7 +291,7 @@ func (BasicOperateUser) UserLoginByPhoneAndPassword(c *gin.Context) {
 		})
 	}
 	// 检查账号是否已经注册
-	exists, existsuser, err := models.UserBasic{}.FindUserByPhoneAndPassword(user.PhoneNumber)
+	exists, existsuser, err := models.UserBasic{}.FindUserByPhoneAndPassword(user.PhoneNumber, pkg.GetHash(user.Password))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -299,6 +299,7 @@ func (BasicOperateUser) UserLoginByPhoneAndPassword(c *gin.Context) {
 		})
 		return
 	}
+	fmt.Println(existsuser)
 	if !exists {
 		// 用户已经存在，你可以通过 existingUser 使用用户信息
 		c.JSON(http.StatusConflict, gin.H{
@@ -307,13 +308,16 @@ func (BasicOperateUser) UserLoginByPhoneAndPassword(c *gin.Context) {
 		})
 		return
 	}
-	if existsuser.Password != pkg.GetHash(user.Password) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "手机号或密码错误",
-		})
-		return
-	}
+	//if existsuser.Password != pkg.GetHash(user.Password) {
+	//	fmt.Println("dfdf", user.Password)
+	//	fmt.Println(pkg.GetHash(user.Password))
+	//	fmt.Println(existsuser.Password)
+	//	c.JSON(http.StatusBadRequest, gin.H{
+	//		"code": 400,
+	//		"msg":  "手机号或密码错误",
+	//	})
+	//	return
+	//}
 	token, err := pkg.GenerateToken(existsuser.UserIdentity, existsuser.Account, existsuser.PhoneNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -619,6 +623,15 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 	return
 }
 
+type UserModify struct {
+	NickName         string `json:"nickname"`          // 昵称
+	Password         string `json:"password"`          // 密码
+	Email            string `json:"email"`             // 电子邮件
+	WechatNumber     string `json:"wechat_number"`     // 微信号
+	VerificationCode string `json:"verification_code"` // 验证码
+	Name             string `json:"name"`
+}
+
 // UserModifyInfo 是一个Swagger文档化的函数，用于修改用户信息
 // @Summary 修改用户信息
 // @Description 根据提供的JSON请求体修改用户信息
@@ -627,7 +640,7 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 // @Produce json
 // @Security ApiKeyAuth
 // @Param Authorization header string true "Bearer {token}" default
-// @Param user body User true "需要修改的用户信息"
+// @Param user body UserModify true "需要修改的用户信息"
 // @Param VerificationCode formData string false "验证码" maxlength(6) "验证码"
 // @Success 200 {string} json {"code":200,"msg":"修改信息成功"}
 // @Failure 400 {string} json {"code":400,"msg":"请求无效。服务器无法理解请求"}
@@ -636,9 +649,9 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 // @Failure 404 {string} json {"code":404,"msg":"该账号没有被注册"}
 // @Failure 409 {string} json {"code":409,"msg":"请求错误"}
 // @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
-// @Router /user/modify/info [post]
+// @Router /user/modify/info [put]
 func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
-	var user User
+	var user UserModify
 	// 使用 ShouldBindJSON 解析 JSON 请求体
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -685,7 +698,7 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 		return
 	}
 	if user.Email != existsuser.Email {
-		code, err := dao.RDB.Get(c, user.PhoneNumber).Result()
+		code, err := dao.RDB.Get(c, user.Email).Result()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code": 500,
@@ -802,3 +815,35 @@ func (BasicOperateUser) UserChangesMobilePhoneNumber(c *gin.Context) {
 	})
 	return
 }
+
+//func(BasicOperateUser)GetUserAllProList(c *gin.Context){
+//	// 解析用户信息
+//	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+//	if !exists {
+//		c.JSON(http.StatusUnauthorized, gin.H{
+//			"code":    http.StatusUnauthorized,
+//			"message": "未授权",
+//		})
+//		return
+//	}
+//	// 将 userClaim 转换为你的 UserClaims 结构体
+//	userClaims, ok := userClaim.(*pkg.UserClaims)
+//	if !ok {
+//		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+//		return
+//	}
+//	// 使用 userClaims 中的信息获取文件名等等
+//	exists, existsuser, err := models.UserBasic{}.FindUserByAccount(userClaims.Account)
+//	if err != nil {
+//		c.JSON(http.StatusInternalServerError, gin.H{
+//			"code": 500,
+//			"msg":  "服务器内部错误",
+//		})
+//		return
+//	}
+//	c.JSON(http.StatusOK, gin.H{
+//		"code": "200",
+//		"msg":  "成功获取用户的所有商品信息",
+//	})
+//
+//}

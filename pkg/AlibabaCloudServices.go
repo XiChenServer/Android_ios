@@ -9,6 +9,7 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"io"
+	"mime/multipart"
 	"strings"
 )
 
@@ -139,4 +140,30 @@ func DownAvatarFromOSS(fileName string) (io.ReadCloser, error) {
 	}
 
 	return fileReader, nil
+}
+func UploadAllFile(objectKey string, file *multipart.FileHeader) error {
+	client, err := oss.New(endpoint, AccessKeyID, AccessKeySecret)
+	if err != nil {
+		return fmt.Errorf("连接OSS时发生错误: %v", err)
+	}
+
+	bucket, err := client.Bucket(bucketName)
+	if err != nil {
+		return fmt.Errorf("访问OSS存储桶时发生错误: %v", err)
+	}
+
+	// 打开文件
+	fileReader, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("打开文件时发生错误: %v", err)
+	}
+	defer fileReader.Close()
+
+	// 上传文件到OSS
+	err = bucket.PutObject(objectKey, fileReader)
+	if err != nil {
+		return fmt.Errorf("上传文件到OSS时发生错误: %v", err)
+	}
+
+	return nil
 }

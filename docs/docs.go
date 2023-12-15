@@ -24,6 +24,96 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/get/one_product_info": {
+            "post": {
+                "description": "根据商品的唯一标识符获取特定商品的详细信息。",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取特定商品的详细信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "商品的唯一标识符",
+                        "name": "commodity_identity",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": \"200\", \"msg\": \"成功获取商品信息\", \"data\": CommodityBasic}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/get/user_all_pro_list": {
+            "post": {
+                "description": "获取指定用户的所有商品信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "获取用户所有商品信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户唯一标识",
+                        "name": "user_identity",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"获取商品所有信息\",\"data\":{\"user_products\":{}}}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\":500,\"msg\":\"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/simple_info": {
+            "get": {
+                "description": "Retrieve a list of all products with basic information and categories.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取所有商品的简单信息",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/send_email_code": {
             "post": {
                 "description": "Send an email verification code to the specified email address",
@@ -111,8 +201,222 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/delete/address": {
+        "/user/adds/products": {
             "post": {
+                "description": "允许用户添加具有详细信息和媒体文件的商品",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "用户添加商品",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "商品类型",
+                        "name": "type",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品标题",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品数量",
+                        "name": "number",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品信息",
+                        "name": "information",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品价格",
+                        "name": "price",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否拍卖",
+                        "name": "is_auction",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "街道",
+                        "name": "street",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "城市",
+                        "name": "city",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "国家",
+                        "name": "country",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "省份",
+                        "name": "province",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "联系人及其信息",
+                        "name": "contact",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮件地址",
+                        "name": "post_code",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "商品图片",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": \"200\", \"msg\": \"成功创建商品\", \"data\": CommodityBasic}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": \"400\", \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": \"401\", \"message\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/changes/mobile/phone": {
+            "post": {
+                "description": "根据用户身份标识更换用户的手机号码。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "更换用户手机号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "要更换的手机号码",
+                        "name": "phone_number",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "verification_code",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"手机号更换成功\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "code\": 403, \"msg\": \"禁止访问\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": 404, \"msg\": \"未找到资源\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "code\": 409, \"msg\": \"该账号没有被注册\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/delete/address": {
+            "delete": {
                 "description": "根据用户身份标识删除用户的地址信息。",
                 "produces": [
                     "application/json"
@@ -475,7 +779,7 @@ const docTemplate = `{
             }
         },
         "/user/modify/info": {
-            "post": {
+            "put": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -503,7 +807,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/servers.User"
+                            "$ref": "#/definitions/servers.UserModify"
                         }
                     },
                     {
@@ -843,6 +1147,34 @@ const docTemplate = `{
                 },
                 "user_identity": {
                     "description": "用户身份信息",
+                    "type": "string"
+                },
+                "verification_code": {
+                    "description": "验证码",
+                    "type": "string"
+                },
+                "wechat_number": {
+                    "description": "微信号",
+                    "type": "string"
+                }
+            }
+        },
+        "servers.UserModify": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "电子邮件",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "description": "昵称",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "密码",
                     "type": "string"
                 },
                 "verification_code": {

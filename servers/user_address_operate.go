@@ -112,7 +112,7 @@ func (BasicOperateUser) UserUploadAddress(c *gin.Context) {
 // @Failure 404 {string} json {"code": 404, "msg": "未找到资源"}
 // @Failure 409 {string} json {"code": 409, "msg": "该账号没有被注册"}
 // @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
-// @Router /user/delete/address [post]
+// @Router /user/delete/address [delete]
 func (BasicOperateUser) UserDeleteAddress(c *gin.Context) {
 	identity := c.PostForm("identity")
 	fmt.Println("identity:", identity)

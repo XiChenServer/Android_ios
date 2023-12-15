@@ -72,6 +72,26 @@ definitions:
         description: 微信号
         type: string
     type: object
+  servers.UserModify:
+    properties:
+      email:
+        description: 电子邮件
+        type: string
+      name:
+        type: string
+      nickname:
+        description: 昵称
+        type: string
+      password:
+        description: 密码
+        type: string
+      verification_code:
+        description: 验证码
+        type: string
+      wechat_number:
+        description: 微信号
+        type: string
+    type: object
 host: 192.168.0.146:13000
 info:
   contact:
@@ -86,6 +106,65 @@ info:
   title: 淘牛马
   version: "1.0"
 paths:
+  /get/one_product_info:
+    post:
+      description: 根据商品的唯一标识符获取特定商品的详细信息。
+      parameters:
+      - description: 商品的唯一标识符
+        in: query
+        name: commodity_identity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "成功获取商品信息", "data": CommodityBasic}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 获取特定商品的详细信息
+  /get/user_all_pro_list:
+    post:
+      description: 获取指定用户的所有商品信息
+      parameters:
+      - description: 用户唯一标识
+        in: query
+        name: user_identity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"获取商品所有信息","data":{"user_products":{}}}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 获取用户所有商品信息
+      tags:
+      - 商品
+  /products/simple_info:
+    get:
+      description: Retrieve a list of all products with basic information and categories.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: 获取所有商品的简单信息
   /send_email_code:
     post:
       description: Send an email verification code to the specified email address
@@ -143,8 +222,153 @@ paths:
       summary: 发送手机验证码
       tags:
       - 公共方法
-  /user/delete/address:
+  /user/adds/products:
     post:
+      description: 允许用户添加具有详细信息和媒体文件的商品
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: 商品类型
+        in: formData
+        items:
+          type: string
+        name: type
+        required: true
+        type: array
+      - description: 商品标题
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 商品数量
+        in: formData
+        name: number
+        required: true
+        type: string
+      - description: 商品信息
+        in: formData
+        name: information
+        required: true
+        type: string
+      - description: 商品价格
+        in: formData
+        name: price
+        required: true
+        type: string
+      - description: 是否拍卖
+        in: formData
+        name: is_auction
+        type: string
+      - description: 街道
+        in: formData
+        name: street
+        type: string
+      - description: 城市
+        in: formData
+        name: city
+        type: string
+      - description: 国家
+        in: formData
+        name: country
+        type: string
+      - description: 省份
+        in: formData
+        name: province
+        type: string
+      - description: 联系人及其信息
+        in: formData
+        name: contact
+        type: string
+      - description: 邮件地址
+        in: formData
+        name: post_code
+        type: string
+      - description: 商品图片
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "成功创建商品", "data": CommodityBasic}'
+          schema:
+            type: string
+        "400":
+          description: 'code": "400", "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": "401", "message": "未授权"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 用户添加商品
+      tags:
+      - 用户私有方法
+  /user/changes/mobile/phone:
+    post:
+      description: 根据用户身份标识更换用户的手机号码。
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 要更换的手机号码
+        in: formData
+        name: phone_number
+        required: true
+        type: string
+      - description: 验证码
+        in: formData
+        name: verification_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "手机号更换成功"}'
+          schema:
+            type: string
+        "400":
+          description: 'code": 400, "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: string
+        "403":
+          description: 'code": 403, "msg": "禁止访问"}'
+          schema:
+            type: string
+        "404":
+          description: 'code": 404, "msg": "未找到资源"}'
+          schema:
+            type: string
+        "409":
+          description: 'code": 409, "msg": "该账号没有被注册"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 更换用户手机号
+      tags:
+      - 用户私有方法
+  /user/delete/address:
+    delete:
       description: 根据用户身份标识删除用户的地址信息。
       parameters:
       - description: Bearer {token}
@@ -381,7 +605,7 @@ paths:
       tags:
       - 用户方法
   /user/modify/info:
-    post:
+    put:
       consumes:
       - application/json
       description: 根据提供的JSON请求体修改用户信息
@@ -396,7 +620,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/servers.User'
+          $ref: '#/definitions/servers.UserModify'
       - description: 验证码
         in: formData
         maxLength: 6

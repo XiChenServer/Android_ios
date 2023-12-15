@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	gs "github.com/swaggo/gin-swagger"
-	"net/http"
 )
 
 func Router() *gin.Engine {
@@ -23,41 +22,36 @@ func Router() *gin.Engine {
 	r.POST("/user/login/password", servers.BasicOperateUser{}.UserLoginByPassword)
 	r.POST("/user/login/phone_and_password", servers.BasicOperateUser{}.UserLoginByPhoneAndPassword)
 
+	r.GET("/products/simple_info", servers.CommodityServer{}.GetProductsSimpleInfo)
+	r.POST("/get/one_product_info", servers.CommodityServer{}.GetOneProAllInfo)
+	r.POST("/get/user_all_pro_list", servers.CommodityServer{}.GetUserAllProList)
+
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
-		user.POST("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
+		user.PUT("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
 		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
 		user.POST("/uploads/avatar", servers.BasicOperateUser{}.UserUploadsAvatar)
-		user.POST("/delete/address", servers.BasicOperateUser{}.UserDeleteAddress)
+		user.DELETE("/delete/address", servers.BasicOperateUser{}.UserDeleteAddress)
 		user.POST("/changes/mobile/phone", servers.BasicOperateUser{}.UserChangesMobilePhoneNumber)
+		user.POST("/adds/products", servers.CommodityServer{}.UserAddsProducts)
 		user.GET("/get/avatar", servers.BasicOperateUser{}.UserGetAvatar)
 		user.GET("/get/info", servers.BasicOperateUser{}.UserGetInfo)
 	}
 	return r
 }
 
-// CORSMiddleware 处理跨域请求的中间件
+// CORSMiddleware 中间件处理CORS
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 设置允许的请求来源，你可以根据实际需要进行调整
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// 设置允许的请求方法
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-
-		// 设置允许的请求头
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
-
-		// 允许客户端发送cookie
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		// 处理预检请求（OPTIONS请求）
 		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
+			c.AbortWithStatus(204)
 			return
 		}
 
-		// 执行后续的处理函数
 		c.Next()
 	}
 }
