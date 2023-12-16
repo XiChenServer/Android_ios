@@ -10,7 +10,7 @@ type KindBasic struct {
 	Name         string            `gorm:"column:name;type:varchar(36);" json:"name"`
 	KindIdentity string            `gorm:"column:kind_identity;type:varchar(36);" json:"kind_identity"`
 	ParentID     uint              `gorm:"column:parent_id;" json:"parent_id"`
-	Parent       *KindBasic        `json:"parent"`
+	Parent       *KindBasic        `gorm:"foreignKey:ParentID" json:"parent"`
 	Children     []*KindBasic      `gorm:"foreignKey:ParentID" json:"children"`
 	Commodities  []*CommodityBasic `gorm:"many2many:kind_commodity_relations" json:"commodities"`
 }
@@ -18,6 +18,7 @@ type KindBasic struct {
 func (KindBasic) TableName() string {
 	return "kind_basic"
 }
+
 func (KindBasic) GetKindBasicLink() (*KindBasic, error) {
 	var kindBasic KindBasic
 	err := dao.DB.First(&kindBasic).Error

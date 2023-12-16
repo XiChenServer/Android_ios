@@ -3,6 +3,7 @@ package router
 import (
 	"Android_ios/middleware"
 	"Android_ios/servers"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	gs "github.com/swaggo/gin-swagger"
@@ -11,6 +12,8 @@ import (
 func Router() *gin.Engine {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
+	// 使用 CORS 中间件
+	r.Use(cors.Default())
 	r.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("/send_phone_code", servers.BasicServer{}.SendPhoneCode)
@@ -25,6 +28,7 @@ func Router() *gin.Engine {
 	r.GET("/products/simple_info", servers.CommodityServer{}.GetProductsSimpleInfo)
 	r.POST("/get/one_product_info", servers.CommodityServer{}.GetOneProAllInfo)
 	r.POST("/get/user_all_pro_list", servers.CommodityServer{}.GetUserAllProList)
+	r.POST("/get/product/by_category", servers.CategoryServer{}.FindProByCategory)
 
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
@@ -36,6 +40,14 @@ func Router() *gin.Engine {
 		user.POST("/adds/products", servers.CommodityServer{}.UserAddsProducts)
 		user.GET("/get/avatar", servers.BasicOperateUser{}.UserGetAvatar)
 		user.GET("/get/info", servers.BasicOperateUser{}.UserGetInfo)
+		user.POST("/modifies/products", servers.CommodityServer{}.UserModifiesProducts)
+	}
+	admin := r.Group("/admin")
+	{
+		admin.POST("/add_new_category_info", servers.AdminServer{}.AddNewCategoryInfo)
+		admin.POST("/add_new_son_category_info", servers.AdminServer{}.AddNewSonCategoryInfo)
+		admin.GET("/get/all_list_categories", servers.AdminServer{}.GetAllCategoryList)
+
 	}
 	return r
 }

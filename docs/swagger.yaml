@@ -106,13 +106,91 @@ info:
   title: 淘牛马
   version: "1.0"
 paths:
+  /admin/add_new_category_info:
+    post:
+      consumes:
+      - application/json
+      description: 根据传入的名称创建新的分类
+      parameters:
+      - description: 分类名称
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "新的分类创建完成"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 添加新的分类
+      tags:
+      - 管理员私有方法
+  /admin/add_new_son_category_info:
+    post:
+      consumes:
+      - application/json
+      description: 根据传入的名称创建新的分类
+      parameters:
+      - description: 分类名称
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: 父分类的identity
+        in: query
+        name: identity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "新的分类创建完成"}'
+          schema:
+            type: string
+        "404":
+          description: 'code": 404, "msg": "父分类没有找到"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 添加新的分类
+      tags:
+      - 管理员私有方法
+  /admin/get/all_list_categories:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有的分类信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "获取分类信息成功", "data": [分类信息列表]}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 查看所有分类
+      tags:
+      - 管理员私有方法
   /get/one_product_info:
     post:
       description: 根据商品的唯一标识符获取特定商品的详细信息。
       parameters:
       - description: 商品的唯一标识符
         in: query
-        name: commodity_identity
+        name: id
         required: true
         type: string
       produces:
@@ -127,6 +205,29 @@ paths:
           schema:
             type: string
       summary: 获取特定商品的详细信息
+  /get/product/by_category:
+    post:
+      description: 根据kind_identity获取特定类别下的所有商品
+      parameters:
+      - description: Kind Identity
+        in: query
+        name: kind_identity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "获取该类型下的所有商品", "count": 10, "list": []}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 获取特定类别的所有商品
+      tags:
+      - 商品
   /get/user_all_pro_list:
     post:
       description: 获取指定用户的所有商品信息
@@ -604,6 +705,107 @@ paths:
       summary: 用户登录（使用手机号和密码）
       tags:
       - 用户方法
+  /user/modifies/products:
+    post:
+      description: 允许用户修改商品详细信息和媒体文件
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品ID
+        in: formData
+        name: id
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: 商品类型
+        in: formData
+        items:
+          type: string
+        name: type
+        required: true
+        type: array
+      - description: 商品标题
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 商品数量
+        in: formData
+        name: number
+        required: true
+        type: string
+      - description: 商品信息
+        in: formData
+        name: information
+        required: true
+        type: string
+      - description: 商品价格
+        in: formData
+        name: price
+        required: true
+        type: string
+      - description: 是否拍卖
+        in: formData
+        name: is_auction
+        type: string
+      - description: 街道
+        in: formData
+        name: street
+        type: string
+      - description: 城市
+        in: formData
+        name: city
+        type: string
+      - description: 国家
+        in: formData
+        name: country
+        type: string
+      - description: 省份
+        in: formData
+        name: province
+        type: string
+      - description: 联系人及其信息
+        in: formData
+        name: contact
+        type: string
+      - description: 邮件地址
+        in: formData
+        name: post_code
+        type: string
+      - description: 商品图片
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "成功修改商品", "data": CommodityBasic}'
+          schema:
+            type: string
+        "400":
+          description: 'code": "400", "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": "401", "message": "未授权"}'
+          schema:
+            type: string
+        "404":
+          description: 'code": "404", "msg": "商品不存在"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 用户修改商品信息
+      tags:
+      - 用户私有方法
   /user/modify/info:
     put:
       consumes:

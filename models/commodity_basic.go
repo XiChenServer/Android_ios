@@ -90,3 +90,21 @@ func (CommodityBasic) CreateCommodity(commodity *CommodityBasic) error {
 	}
 	return nil
 }
+
+// FindCommodityByID 根据商品ID查找商品
+func (cb *CommodityBasic) FindCommodityByID(commodityID string) (*CommodityBasic, error) {
+	var commodity CommodityBasic
+	if err := dao.DB.Where("commodity_identity = ?", commodityID).Preload("Categories").Preload("Media").Preload("Address").First(&commodity).Error; err != nil {
+		return nil, err
+	}
+	return &commodity, nil
+}
+
+// UpdateCommodity 更新商品信息
+func (c *CommodityBasic) UpdateCommodity(updates CommodityBasic) error {
+	// 使用 Model 方法指定要更新的记录
+	if err := dao.DB.Model(c).Updates(updates).Error; err != nil {
+		return err
+	}
+	return nil
+}

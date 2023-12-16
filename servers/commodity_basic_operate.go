@@ -229,7 +229,7 @@ func validateAndAssociateTypes(types []string) ([]*models.KindBasic, error) {
 // @Summary 获取所有商品的简单信息
 // @Description Retrieve a list of all products with basic information and categories.
 // @Produce json
-// Tags 公共方法
+// Tags 商品
 // @Success 200 {string} ResponseObject
 // @Failure 500 {string} ResponseObject
 // @Router /products/simple_info [get]
@@ -262,14 +262,14 @@ func (CommodityServer) GetProductsSimpleInfo(c *gin.Context) {
 // @Summary 获取特定商品的详细信息
 // @Description 根据商品的唯一标识符获取特定商品的详细信息。
 // @Produce json
-// Tags 公共方法
-// @Param commodity_identity query string true "商品的唯一标识符" example:"your_commodity_identity_value"
+// Tags 商品
+// @Param id query string true "商品的唯一标识符" example:"your_commodity_id"
 // @Success 200 {string} json {"code": "200", "msg": "成功获取商品信息", "data": CommodityBasic}
 // @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
 // @Router /get/one_product_info [post]
 func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 	var request struct {
-		CommodityIdentity string `form:"commodity_identity" binding:"required"`
+		CommodityIdentity uint `form:"id" binding:"required"`
 	}
 
 	if err := c.ShouldBindQuery(&request); err != nil {
@@ -279,12 +279,12 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 		})
 		return
 	}
-
+	var count int64
 	identity := request.CommodityIdentity
 	var commodity models.CommodityBasic
 	if err := dao.DB.Preload("Categories").
-		Where("commodity_basic.commodity_identity = ?", identity).
-		First(&commodity).Error; err != nil {
+		Where("commodity_basic.id = ?", identity).
+		First(&commodity).Count(&count).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": "500",
 			"msg":  "服务器内部错误",
@@ -305,6 +305,7 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 		"code": http.StatusOK,
 		"msg":  "获取商品所有信息",
 		"data": map[string]interface{}{
+			"count":     count,
 			"commodity": commodity,
 			"user":      user,
 		},
@@ -323,13 +324,13 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 func (CommodityServer) GetUserAllProList(c *gin.Context) {
 	identity := c.Query("user_identity")
 	fmt.Println(identity)
-
+	var count int64
 	var user models.UserBasic
 	if err := dao.DB.
 		Preload("Commodity").
 		Select("avatar, user_identity, nickname, account, phone_number, score, name, email, wechat_number").
 		Where("user_identity = ?", identity).
-		First(&user).Error; err != nil {
+		First(&user).Count(&count).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": "500",
@@ -355,7 +356,200 @@ func (CommodityServer) GetUserAllProList(c *gin.Context) {
 		"code": http.StatusOK,
 		"msg":  "获取商品所有信息",
 		"data": map[string]interface{}{
+			"count":         count,
 			"user_products": user,
 		},
+	})
+}
+
+// UserModifiesProducts
+// @Summary 用户修改商品信息
+// @Description 允许用户修改商品详细信息和媒体文件
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param id formData string true "商品ID"
+// @Param type formData []string true "商品类型"
+// @Param title formData string true "商品标题"
+// @Param number formData string true "商品数量"
+// @Param information formData string true "商品信息"
+// @Param price formData string true "商品价格"
+// @Param is_auction formData string false "是否拍卖"
+// @Param street formData string false "街道"
+// @Param city formData string false "城市"
+// @Param country formData string false "国家"
+// @Param province formData string false "省份"
+// @Param contact formData string false "联系人及其信息"
+// @Param post_code formData string false "邮件地址"
+// @Param files formData file true "商品图片"
+// @Success 200 {string} json {"code": "200", "msg": "成功修改商品", "data": CommodityBasic}
+// @Failure 400 {string} json {"code": "400", "msg": "请求无效。服务器无法理解请求"}
+// @Failure 401 {string} json {"code": "401", "message": "未授权"}
+// @Failure 404 {string} json {"code": "404", "msg": "商品不存在"}
+// @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
+// @Router /user/modifies/products [post]
+func (CommodityServer) UserModifiesProducts(c *gin.Context) {
+	BucketName := "xichen-server"
+	// Parse user information
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// Get form-data values
+	id := c.PostForm("id")
+	var product models.CommodityBasic
+	if err := dao.DB.Where("id = ?", id).First(&product).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "无效的参数：没有改商品",
+		})
+		return
+	}
+	if product.SoldStatus != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "商品信息不能被修改",
+		})
+		return
+	}
+
+	types := c.PostFormArray("type")
+	title := c.PostForm("title")
+	number := c.PostForm("number")
+	information := c.PostForm("information")
+	price := c.PostForm("price")
+	isAuction := c.PostForm("is_auction")
+	street := c.PostForm("street")
+	city := c.PostForm("city")
+	country := c.PostForm("country")
+	province := c.PostForm("province")
+	contact := c.PostForm("contact")
+	postCode := c.PostForm("post_code")
+
+	// Parse number and price
+	// Parse number and price
+	numberInt, err := strconv.Atoi(number)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "无效的参数：商品数量",
+		})
+		return
+	}
+
+	priceFloat, err := strconv.ParseFloat(price, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "无效的参数：商品价格",
+		})
+		return
+	}
+
+	// Parse isAuction, handle empty value
+	var isAuctionInt int
+	if isAuction != "" {
+		isAuctionInt, err = strconv.Atoi(isAuction)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code": 400,
+				"msg":  "无效的参数：是否拍卖",
+			})
+			return
+		}
+	} else {
+		// Set a default value or handle it as needed
+		isAuctionInt = 0 // Assuming 0 as a default value, update as per your requirement
+	}
+
+	// Validate and associate types
+	categories, err := validateAndAssociateTypes(types)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	// Create address entry
+	modelAddr := models.AddressEntry{
+		Street:   street,
+		City:     city,
+		Country:  country,
+		Province: province,
+		Contact:  contact,
+		PostCode: postCode,
+		Identity: pkg.GetAccountNumber(),
+	}
+
+	// Find or create user
+	exists, _, err = models.UserBasic{}.FindUserByAccount(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// Create product
+	status := 0
+	if isAuctionInt != status {
+		status = 1
+	}
+	addrJson := models.JSONAddress{modelAddr}
+	product.Title = title
+	product.Number = numberInt
+	product.Information = information
+	product.Price = priceFloat
+	product.SoldStatus = status
+	product.Media = nil
+	product.IsAuction = isAuctionInt
+	product.Address = addrJson
+	product.Categories = categories
+
+	// Upload files to OSS
+	form, err := c.MultipartForm()
+	// Get form-data values
+	// ...
+	files := form.File["files"] // 注意这里的字段名要与 curl 请求中的一致
+	// ...
+
+	for _, file := range files {
+		objectKey := "your-prefix/" + file.Filename
+		err = pkg.UploadAllFile(objectKey, file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		fileURL := fmt.Sprintf("https://%s/%s", BucketName, objectKey)
+		media := models.MediaBasic{Image: fileURL}
+		product.Media = append(product.Media, media)
+	}
+
+	// 保存修改后的商品
+	if err := product.UpdateCommodity(product); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": "500",
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// Respond with success
+	c.JSON(http.StatusOK, gin.H{
+		"code": "200",
+		"msg":  "成功修改商品信息",
+		"data": product,
 	})
 }
