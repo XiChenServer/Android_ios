@@ -633,6 +633,66 @@
                 }
             }
         },
+        "/user/deletes/products": {
+            "post": {
+                "description": "允许用户从其商品列表中删除商品",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "用户删除商品",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品ID",
+                        "name": "productID",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": \"200\", \"msg\": \"成功删除商品\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": \"400\", \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": \"401\", \"message\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": \"404\", \"msg\": \"商品不存在\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/get/avatar": {
             "get": {
                 "security": [
@@ -945,8 +1005,8 @@
                     {
                         "type": "string",
                         "description": "商品ID",
-                        "name": "id",
-                        "in": "formData",
+                        "name": "productID",
+                        "in": "query",
                         "required": true
                     },
                     {

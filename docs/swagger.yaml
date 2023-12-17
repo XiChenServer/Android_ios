@@ -516,6 +516,46 @@ paths:
       summary: 删除用户地址
       tags:
       - 用户私有方法
+  /user/deletes/products:
+    post:
+      description: 允许用户从其商品列表中删除商品
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品ID
+        in: query
+        name: productID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": "200", "msg": "成功删除商品"}'
+          schema:
+            type: string
+        "400":
+          description: 'code": "400", "msg": "请求无效。服务器无法理解请求"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": "401", "message": "未授权"}'
+          schema:
+            type: string
+        "404":
+          description: 'code": "404", "msg": "商品不存在"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": "500", "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 用户删除商品
+      tags:
+      - 用户私有方法
   /user/get/avatar:
     get:
       consumes:
@@ -715,8 +755,8 @@ paths:
         required: true
         type: string
       - description: 商品ID
-        in: formData
-        name: id
+        in: query
+        name: productID
         required: true
         type: string
       - collectionFormat: csv

@@ -66,10 +66,9 @@ func (UserBasic) SaveUser(user *UserBasic) error {
 	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
 	db := dao.DB
 
-	// 执行保存操作
-	result := db.Model(&UserBasic{}).Where("user_identity = ?", user.UserIdentity).Updates(user)
-	if result.Error != nil {
-		return result.Error
+	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
+	if err := db.Save(user).Error; err != nil {
+		return err
 	}
 
 	return nil

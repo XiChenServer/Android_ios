@@ -181,6 +181,7 @@ func (CommodityServer) UserAddsProducts(c *gin.Context) {
 			return
 		}
 		fileURL := fmt.Sprintf("https://%s/%s", BucketName, objectKey)
+		fmt.Println(fileURL)
 		media := models.MediaBasic{Image: fileURL}
 		product.Media = append(product.Media, media)
 	}
@@ -237,7 +238,7 @@ func (CommodityServer) GetProductsSimpleInfo(c *gin.Context) {
 	var commodities []models.CommodityBasic
 	var count int64
 
-	if err := dao.DB.Preload("Categories").
+	if err := dao.DB.Preload("Categories").Order("updated_at desc").
 		Find(&commodities).
 		Count(&count).
 		Error; err != nil {
@@ -282,7 +283,7 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 	var count int64
 	identity := request.CommodityIdentity
 	var commodity models.CommodityBasic
-	if err := dao.DB.Preload("Categories").
+	if err := dao.DB.Preload("Categories", "deleted_at IS NULL").
 		Where("commodity_basic.id = ?", identity).
 		First(&commodity).Count(&count).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -291,6 +292,7 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 		})
 		return
 	}
+
 	var user models.UserBasic
 	if err := dao.DB.Select("avatar,nickname,account,phone_number,score,name,user_identity").
 		Where("user_identity = ?", commodity.CommodityIdentity).
@@ -327,7 +329,9 @@ func (CommodityServer) GetUserAllProList(c *gin.Context) {
 	var count int64
 	var user models.UserBasic
 	if err := dao.DB.
-		Preload("Commodity").
+		Preload("Commodity", func(db *gorm.DB) *gorm.DB {
+			return db.Order("updated_at DESC") // 假设CommodityBasic有一个UpdatedAt字段
+		}).
 		Select("avatar, user_identity, nickname, account, phone_number, score, name, email, wechat_number").
 		Where("user_identity = ?", identity).
 		First(&user).Count(&count).Error; err != nil {
@@ -368,7 +372,7 @@ func (CommodityServer) GetUserAllProList(c *gin.Context) {
 // @Tags 用户私有方法
 // @Produce json
 // @Param Authorization header string true "Bearer {token}"
-// @Param id formData string true "商品ID"
+// @Param productID query string true "商品ID"
 // @Param type formData []string true "商品类型"
 // @Param title formData string true "商品标题"
 // @Param number formData string true "商品数量"
@@ -404,24 +408,60 @@ func (CommodityServer) UserModifiesProducts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
 		return
 	}
-	// Get form-data values
-	id := c.PostForm("id")
-	var product models.CommodityBasic
-	if err := dao.DB.Where("id = ?", id).First(&product).Error; err != nil {
+	productID, err := strconv.Atoi(c.Query("productID"))
+	fmt.Println(productID)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
-			"msg":  "无效的参数：没有改商品",
-		})
-		return
-	}
-	if product.SoldStatus != 1 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "商品信息不能被修改",
+			"msg":  "无效的商品ID",
 		})
 		return
 	}
 
+	var user models.UserBasic
+	if err := dao.DB.Where("account = ?", userClaims.Account).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	var product1 models.CommodityBasic
+	if err := dao.DB.Where("id = ?", productID).First(&product1).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code": 404,
+			"msg":  "商品不存在",
+		})
+		return
+	}
+
+	if product1.SoldStatus != 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code": 400,
+			"msg":  "商品信息暂时不能修改",
+		})
+		return
+	}
+
+	// 删除商品与用户的关联关系
+	if err := dao.DB.Model(&user).Association("Commodity").Delete(&product1); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// 清除商品与商品类型的多对多关联关系
+	if err := dao.DB.Model(&product1).Association("Categories").Clear(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	// Get form-data values
 	types := c.PostFormArray("type")
 	title := c.PostForm("title")
 	number := c.PostForm("number")
@@ -493,7 +533,7 @@ func (CommodityServer) UserModifiesProducts(c *gin.Context) {
 	}
 
 	// Find or create user
-	exists, _, err = models.UserBasic{}.FindUserByAccount(userClaims.Account)
+	exists, existsuser, err := models.UserBasic{}.FindUserByAccount(userClaims.Account)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -508,15 +548,20 @@ func (CommodityServer) UserModifiesProducts(c *gin.Context) {
 		status = 1
 	}
 	addrJson := models.JSONAddress{modelAddr}
-	product.Title = title
-	product.Number = numberInt
-	product.Information = information
-	product.Price = priceFloat
-	product.SoldStatus = status
-	product.Media = nil
-	product.IsAuction = isAuctionInt
-	product.Address = addrJson
-	product.Categories = categories
+	product := &models.CommodityBasic{
+		CommodityIdentity: existsuser.UserIdentity,
+		Title:             title,
+		Number:            numberInt,
+		Information:       information,
+		Price:             priceFloat,
+		SoldStatus:        status,
+		Media:             nil,
+		IsAuction:         isAuctionInt,
+		Address:           addrJson,
+		LikeCount:         0,
+		CollectCount:      0,
+		Categories:        categories,
+	}
 
 	// Upload files to OSS
 	form, err := c.MultipartForm()
@@ -537,9 +582,17 @@ func (CommodityServer) UserModifiesProducts(c *gin.Context) {
 		product.Media = append(product.Media, media)
 	}
 
-	// 保存修改后的商品
-	if err := product.UpdateCommodity(product); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+	// Save user and product
+	existsuser.Commodity = append(existsuser.Commodity, product)
+	if existsuser.SaveUser(existsuser); err != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"code": "500",
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if product.CreateCommodity(product); err != nil {
+		c.JSON(http.StatusConflict, gin.H{
 			"code": "500",
 			"msg":  "服务器内部错误",
 		})
@@ -551,5 +604,98 @@ func (CommodityServer) UserModifiesProducts(c *gin.Context) {
 		"code": "200",
 		"msg":  "成功修改商品信息",
 		"data": product,
+	})
+}
+
+// ClearExistingAssociations 清除商品与商品类型之间的旧关联
+func ClearExistingAssociations(productID uint) error {
+	// 从数据库中删除与该商品关联的所有旧关联记录
+	if err := dao.DB.Where("commodity_basic_id = ?", productID).Delete(&models.KindCommodityRelation{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+func (CommodityServer) UserDelPro(c *gin.Context) {
+
+}
+
+// UserDeletesProduct
+// @Summary 用户删除商品
+// @Description 允许用户从其商品列表中删除商品
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param productID query string true "商品ID"
+// @Success 200 {string} json {"code": "200", "msg": "成功删除商品"}
+// @Failure 400 {string} json {"code": "400", "msg": "请求无效。服务器无法理解请求"}
+// @Failure 401 {string} json {"code": "401", "message": "未授权"}
+// @Failure 404 {string} json {"code": "404", "msg": "商品不存在"}
+// @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
+// @Router /user/deletes/products [post]
+func (CommodityServer) UserDeletesProduct(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	productID, err := strconv.Atoi(c.Query("productID"))
+	fmt.Println(productID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "无效的商品ID",
+		})
+		return
+	}
+
+	var user models.UserBasic
+	if err := dao.DB.Where("account = ?", userClaims.Account).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	var product models.CommodityBasic
+	if err := dao.DB.Where("id = ?", productID).First(&product).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code": 404,
+			"msg":  "商品不存在",
+		})
+		return
+	}
+
+	// 删除商品与用户的关联关系
+	if err := dao.DB.Model(&user).Association("Commodity").Delete(&product); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// 清除商品与商品类型的多对多关联关系
+	if err := dao.DB.Model(&product).Association("Categories").Clear(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": "200",
+		"msg":  "成功删除商品",
 	})
 }

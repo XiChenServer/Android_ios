@@ -4,6 +4,7 @@ import (
 	"Android_ios/dao"
 	"Android_ios/models"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -23,8 +24,10 @@ func (CategoryServer) FindProByCategory(c *gin.Context) {
 	identity := c.Query("kind_identity")
 	var categories models.KindBasic
 	var count int64
-	if err := dao.DB.Preload("Commodities").
-		Where("kind_basic.kind_identity = ?", identity).Find(&categories).Count(&count).Error; err != nil {
+	if err := dao.DB.Unscoped().Preload("Commodities", func(db *gorm.DB) *gorm.DB {
+		return db.Order("updated_at DESC") // 假设CommodityBasic有一个UpdatedAt字段
+	}).Unscoped().
+		Where("kind_basic.kind_identity = ?", identity).Order("updated_at desc").Find(&categories).Count(&count).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",

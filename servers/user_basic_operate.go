@@ -93,7 +93,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 	user_identity := pkg.GenerateUniqueID()
 	nickname := pkg.GenerateRandomCreativeNickname()
 	err = dao.DB.Create(&models.UserBasic{
-		Avatar:       "",
+		Avatar:       "https://xichen-server/your-prefix/9682B802FF091A4746DCC98526E2FE8B.jpg",
 		UserIdentity: user_identity,
 		NickName:     nickname,
 		Account:      account,
@@ -389,18 +389,26 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件大小超出限制"})
 		return
 	}
-	// 生成唯一的文件名
-	fileName := pkg.GenerateUniqueImageName(userClaims.UserIdentity, file.Filename)
-	// 直接获取文件内容的 io.Reader
-	fileReader, err := file.Open()
+	objectKey := "your-prefix/" + file.Filename
+	err = pkg.UploadAllFile(objectKey, file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	defer fileReader.Close()
+	fileURL := fmt.Sprintf("https://%s/%s", userClaims.Account, objectKey)
+
+	//// 生成唯一的文件名
+	//fileName := pkg.GenerateUniqueImageName(userClaims.UserIdentity, file.Filename)
+	//// 直接获取文件内容的 io.Reader
+	//fileReader, err := file.Open()
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{
+	//		"code": 500,
+	//		"msg":  "服务器内部错误",
+	//	})
+	//	return
+	//}
+	//defer fileReader.Close()
 	// 在这里你可以使用 fileReader 进行进一步的操作
 	// 例如，你可以将其传递给某个需要 io.Reader 的函数
 	// DoSomethingWithReader(fileReader)
@@ -422,7 +430,7 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		})
 		return
 	}
-	existsuser.Avatar = fileName
+	existsuser.Avatar = fileURL
 	if err = existsuser.SaveUser(existsuser); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -431,11 +439,11 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		return
 	}
 
-	err = pkg.UploadAvatarFromForm(fileName, fileReader)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
-		return
-	}
+	//err = pkg.UploadAvatarFromForm(fileName, fileReader)
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+	//	return
+	//}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "文件上传成功"})
 }
 
@@ -815,126 +823,3 @@ func (BasicOperateUser) UserChangesMobilePhoneNumber(c *gin.Context) {
 	})
 	return
 }
-
-//func (BasicOperateUser) UserModifiesProInfor(c *gin.Context) {
-//	// 解析用户信息
-//	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
-//	if !exists {
-//		c.JSON(http.StatusUnauthorized, gin.H{
-//			"code":    http.StatusUnauthorized,
-//			"message": "未授权",
-//		})
-//		return
-//	}
-//	// 将 userClaim 转换为你的 UserClaims 结构体
-//	userClaims, ok := userClaim.(*pkg.UserClaims)
-//	if !ok {
-//		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
-//		return
-//	}
-//	// 使用 userClaims 中的信息获取文件名等等
-//	exists, existsuser, err := models.UserBasic{}.FindUserByAccount(userClaims.Account)
-//	if err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{
-//			"code": 500,
-//			"msg":  "服务器内部错误",
-//		})
-//		return
-//	}
-//	c.Query("")
-//	c.JSON(http.StatusOK, gin.H{
-//		"code": "200",
-//		"msg":  "成功获取用户的所有商品信息",
-//	})
-//
-//}
-
-// UserModifiesProducts
-// @Summary 用户修改商品信息
-// @Description 允许用户修改商品详细信息和媒体文件
-// @Tags 用户私有方法
-// @Produce json
-// @Param Authorization header string true "Bearer {token}"
-// @Param commodity_id path string true "商品ID"
-// @Param type formData []string true "商品类型"
-// @Param title formData string true "商品标题"
-// @Param number formData string true "商品数量"
-// @Param information formData string true "商品信息"
-// @Param price formData string true "商品价格"
-// @Param is_auction formData string false "是否拍卖"
-// @Param street formData string false "街道"
-// @Param city formData string false "城市"
-// @Param country formData string false "国家"
-// @Param province formData string false "省份"
-// @Param contact formData string false "联系人及其信息"
-// @Param post_code formData string false "邮件地址"
-// @Param files formData file true "商品图片"
-// @Success 200 {string} json {"code": "200", "msg": "成功修改商品", "data": CommodityBasic}
-// @Failure 400 {string} json {"code": "400", "msg": "请求无效。服务器无法理解请求"}
-// @Failure 401 {string} json {"code": "401", "message": "未授权"}
-// @Failure 404 {string} json {"code": "404", "msg": "商品不存在"}
-// @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
-// @Router /user/modifies/products/{commodity_id} [put]
-//func (CommodityServer) UserModifiesProducts(c *gin.Context) {
-//	// 与 UserAddsProducts 相似的代码，直到解析用户信息
-//
-//	// 从路径参数中解析 commodity_id
-//	commodityID := c.Param("commodity_id")
-//
-//	// 查找现有商品
-//	commodityInstance := &models.CommodityBasic{} // 创建 CommodityBasic 的指针
-//	_, err := commodityInstance.FindCommodityByID(commodityID)
-//	if err != nil {
-//		c.JSON(http.StatusNotFound, gin.H{
-//			"code": 404,
-//			"msg":  "商品不存在",
-//		})
-//		return
-//	}
-//
-//	// 更新商品信息
-//	commodityInstance.Title = title
-//	commodityInstance.Number = numberInt
-//	commodityInstance.Information = information
-//	commodityInstance.Price = priceFloat
-//	commodityInstance.IsAuction = isAuctionInt
-//
-//	// 更新地址信息
-//	commodityInstance.Address = models.JSONAddress{
-//		Street:   street,
-//		City:     city,
-//		Country:  country,
-//		Province: province,
-//		Contact:  contact,
-//		PostCode: postCode,
-//	}
-//
-//	// 验证和关联类型
-//	categories, err := validateAndAssociateTypes(types)
-//	if err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{
-//			"code": 400,
-//			"msg":  err.Error(),
-//		})
-//		return
-//	}
-//	commodityInstance.Categories = categories
-//
-//	// 更新媒体文件（类似于 UserAddsProducts）
-//
-//	// 保存修改后的商品
-//	if err := commodityInstance.UpdateCommodity(commodityInstance); err != nil {
-//		c.JSON(http.StatusConflict, gin.H{
-//			"code": "500",
-//			"msg":  "服务器内部错误",
-//		})
-//		return
-//	}
-//
-//	// 返回成功响应
-//	c.JSON(http.StatusOK, gin.H{
-//		"code": "200",
-//		"msg":  "成功修改商品",
-//		"data": commodityInstance,
-//	})
-//}

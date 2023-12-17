@@ -36,6 +36,7 @@ func Router() *gin.Engine {
 		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
 		user.POST("/uploads/avatar", servers.BasicOperateUser{}.UserUploadsAvatar)
 		user.DELETE("/delete/address", servers.BasicOperateUser{}.UserDeleteAddress)
+		user.POST("/deletes/products", servers.CommodityServer{}.UserDeletesProduct)
 		user.POST("/changes/mobile/phone", servers.BasicOperateUser{}.UserChangesMobilePhoneNumber)
 		user.POST("/adds/products", servers.CommodityServer{}.UserAddsProducts)
 		user.GET("/get/avatar", servers.BasicOperateUser{}.UserGetAvatar)
@@ -47,7 +48,6 @@ func Router() *gin.Engine {
 		admin.POST("/add_new_category_info", servers.AdminServer{}.AddNewCategoryInfo)
 		admin.POST("/add_new_son_category_info", servers.AdminServer{}.AddNewSonCategoryInfo)
 		admin.GET("/get/all_list_categories", servers.AdminServer{}.GetAllCategoryList)
-
 	}
 	return r
 }
