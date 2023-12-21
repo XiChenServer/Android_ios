@@ -27,6 +27,7 @@ func Router() *gin.Engine {
 
 	r.GET("/products/simple_info", servers.CommodityServer{}.GetProductsSimpleInfo)
 	r.POST("/get/one_product_info", servers.CommodityServer{}.GetOneProAllInfo)
+	r.POST("/search/product", servers.SearchOperate{}.SearchProduct)
 	r.POST("/get/user_all_pro_list", servers.CommodityServer{}.GetUserAllProList)
 	r.POST("/get/product/by_category", servers.CategoryServer{}.FindProByCategory)
 	//r.POST("/user/like/product ", servers.BasicOperateUser{}.UsersLikePro)

@@ -267,6 +267,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/search/product": {
+            "post": {
+                "description": "根据关键字搜索商品信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "商品搜索",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "搜索关键字",
+                        "name": "data",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": \"200\", \"msg\": \"查找信息成功\", \"data\": []models.CommodityBasic}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": \"400\", \"msg\": \"请求错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": \"401\", \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": \"404\", \"msg\": \"商品不存在\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/send_email_code": {
             "post": {
                 "description": "Send an email verification code to the specified email address",
