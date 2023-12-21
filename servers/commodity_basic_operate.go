@@ -675,9 +675,19 @@ func (CommodityServer) UserDeletesProduct(c *gin.Context) {
 		})
 		return
 	}
+	// Start a database transaction
+	tx := dao.DB.Begin()
 
-	// 删除商品与用户的关联关系
-	if err := dao.DB.Model(&user).Association("Commodity").Delete(&product); err != nil {
+	// Check for errors during the transaction
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Delete the association between user and product
+	if err := tx.Model(&user).Association("Commodity").Delete(&product); err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
@@ -685,17 +695,41 @@ func (CommodityServer) UserDeletesProduct(c *gin.Context) {
 		return
 	}
 
-	// 清除商品与商品类型的多对多关联关系
-	if err := dao.DB.Model(&product).Association("Categories").Clear(); err != nil {
+	// Save the user
+	if err := user.SaveUser(&user); err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
 		})
 		return
 	}
+
+	// Clear the association between product and categories
+	if err := tx.Model(&product).Association("Categories").Clear(); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// Delete the product itself
+	if err := tx.Delete(&product).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// Commit the transaction if everything is successful
+	tx.Commit()
 
 	c.JSON(http.StatusOK, gin.H{
-		"code": "200",
+		"code": 200,
 		"msg":  "成功删除商品",
 	})
 }

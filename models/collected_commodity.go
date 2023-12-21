@@ -4,8 +4,8 @@ import "gorm.io/gorm"
 
 type CollectedCommodity struct {
 	gorm.Model
-	CommodityIdentity string `gorm:"column:commodity_identity;type:varchar(36);" json:"CommodityIdentity"`
-	CollectedIdentity string `gorm:"column:collected_identity;type:varchar(36);" json:"collected_identity"`
+	UserBasicID      uint
+	CommodityBasicID uint
 }
 
 func (CollectedCommodity) TableName() string {

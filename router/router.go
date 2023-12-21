@@ -29,7 +29,7 @@ func Router() *gin.Engine {
 	r.POST("/get/one_product_info", servers.CommodityServer{}.GetOneProAllInfo)
 	r.POST("/get/user_all_pro_list", servers.CommodityServer{}.GetUserAllProList)
 	r.POST("/get/product/by_category", servers.CategoryServer{}.FindProByCategory)
-
+	//r.POST("/user/like/product ", servers.BasicOperateUser{}.UsersLikePro)
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 		user.PUT("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
@@ -42,6 +42,12 @@ func Router() *gin.Engine {
 		user.GET("/get/avatar", servers.BasicOperateUser{}.UserGetAvatar)
 		user.GET("/get/info", servers.BasicOperateUser{}.UserGetInfo)
 		user.POST("/modifies/products", servers.CommodityServer{}.UserModifiesProducts)
+		user.POST("/like/product", servers.BasicOperateUser{}.UsersLikePro)
+		user.GET("/get/like/pro", servers.BasicOperateUser{}.UserGetLikePro)
+		user.POST("/unlike/product", servers.BasicOperateUser{}.UsersUnlikePro)
+		user.POST("/collect/product", servers.BasicOperateUser{}.UserCollectPro)
+		user.GET("/get/collect/pro", servers.BasicOperateUser{}.UserGetCollectPro)
+		user.POST("/uncollect/product", servers.BasicOperateUser{}.UsersUncollectPro)
 	}
 	admin := r.Group("/admin")
 	{

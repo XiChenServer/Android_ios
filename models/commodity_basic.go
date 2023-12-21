@@ -74,6 +74,7 @@ type CommodityBasic struct {
 	//UserInfo     *UserBasic `gorm:"foreignKey:UserIdentity;references:CommodityIdentity"`
 	// Categories 表示与商品相关的类别。
 	Categories []*KindBasic `gorm:"many2many:kind_commodity_relations" json:"categories"`
+	LikedUsers []*KindBasic `gorm:"many2many:liked_commodity" json:"liked_users"`
 }
 
 func (CommodityBasic) TableName() string {

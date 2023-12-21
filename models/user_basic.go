@@ -53,8 +53,8 @@ type UserBasic struct {
 	Score                float32           `gorm:"column:score;type:decimal(10,2);" json:"score"`
 	Name                 string            `gorm:"column:name;type:varchar(24);" json:"name"`
 	Commodity            []*CommodityBasic `gorm:"foreignKey:CommodityIdentity;references:UserIdentity"`
-	LikedCommodities     []*CommodityBasic `gorm:"many2many:liked_commodity;foreignKey:UserIdentity;joinForeignKey:LikedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
-	CollectedCommodities []*CommodityBasic `gorm:"many2many:collected_commodity;foreignKey:UserIdentity;joinForeignKey:CollectedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
+	LikedCommodities     []*CommodityBasic `gorm:"many2many:liked_commodity;"`     //foreignKey:UserIdentity;joinForeignKey:LikedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
+	CollectedCommodities []*CommodityBasic `gorm:"many2many:collected_commodity;"` //foreignKey:UserIdentity;joinForeignKey:CollectedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
 	VerificationCode     string            `gorm:"column:verification_code;type:varchar(24)" json:"verification_code"`
 }
 

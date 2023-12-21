@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 type User struct {
@@ -75,6 +76,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		})
 		return
 	}
+	dao.RDB.Del(c, user.PhoneNumber)
 	if code != user.VerificationCode {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
@@ -178,6 +180,7 @@ func (BasicOperateUser) UserLoginByPhoneCode(c *gin.Context) {
 		})
 		return
 	}
+	dao.RDB.Del(c, user.PhoneNumber)
 	if code != user.VerificationCode {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
@@ -396,24 +399,8 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		return
 	}
 	fileURL := fmt.Sprintf("https://%s/%s", userClaims.Account, objectKey)
-
-	//// 生成唯一的文件名
-	//fileName := pkg.GenerateUniqueImageName(userClaims.UserIdentity, file.Filename)
-	//// 直接获取文件内容的 io.Reader
-	//fileReader, err := file.Open()
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{
-	//		"code": 500,
-	//		"msg":  "服务器内部错误",
-	//	})
-	//	return
-	//}
-	//defer fileReader.Close()
-	// 在这里你可以使用 fileReader 进行进一步的操作
-	// 例如，你可以将其传递给某个需要 io.Reader 的函数
-	// DoSomethingWithReader(fileReader)
-	// 保存文件
 	// 检查账号是否已经注册
+	fmt.Println(fileURL)
 	exists, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -439,11 +426,6 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		return
 	}
 
-	//err = pkg.UploadAvatarFromForm(fileName, fileReader)
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
-	//	return
-	//}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "文件上传成功"})
 }
 
@@ -714,6 +696,7 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 			})
 			return
 		}
+		dao.RDB.Del(c, user.Email)
 		if code != user.VerificationCode {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code": 400,
@@ -801,6 +784,7 @@ func (BasicOperateUser) UserChangesMobilePhoneNumber(c *gin.Context) {
 		})
 		return
 	}
+	dao.RDB.Del(c, phone_number)
 	if code != verification_code {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
@@ -822,4 +806,521 @@ func (BasicOperateUser) UserChangesMobilePhoneNumber(c *gin.Context) {
 		"msg":  "手机号更换成功",
 	})
 	return
+}
+
+// UsersLikePro
+// @Summary 点赞商品
+// @Description 用户点赞商品
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param commodity_identity query string true "商品标识"
+// @Success 200 {string} json {"code": 200, "msg": "点赞成功"}
+// @Failure 401 {string} json {"code": 401, "message": "未授权"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 409 {string} json {"code": 409, "msg": "该账号没有被注册"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/like/product [post]
+func (BasicOperateUser) UsersLikePro(c *gin.Context) {
+	identity := c.Query("commodity_identity")
+	id, err := strconv.Atoi(identity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "message": "未授权"})
+		return
+	}
+
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	_, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	var pro models.CommodityBasic
+	if err := dao.DB.Where("id = ?", uint(id)).First(&pro).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	var product models.UserBasic
+	if err := dao.DB.Preload("LikedCommodities").Where("user_identity = ?", userClaims.UserIdentity).
+		First(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	// 检查用户是否已经点赞过该商品
+	for _, likedProduct := range product.LikedCommodities {
+		if likedProduct.ID == uint(id) {
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "已经点赞过该商品"})
+			return
+		}
+	}
+
+	tx := dao.DB.Begin()
+
+	pro.LikeCount++
+	pro.UpdateCommodity(pro)
+
+	product.LikedCommodities = append(product.LikedCommodities, &pro)
+	existsuser.LikedCommodities = product.LikedCommodities
+	if err := existsuser.SaveUser(existsuser); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "提交事务失败"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "提交事务失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "点赞成功"})
+}
+
+// UserGetLikePro
+// @Summary 获取用户点赞的商品数据
+// @Description 获取用户点赞的商品数据
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {string} models.UserBasic "获取点赞的商品数据"
+// @Failure 401 {string} json {"code": 401, "message": "未授权"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/get/like/pro [get]
+func (BasicOperateUser) UserGetLikePro(c *gin.Context) {
+	// 解析用户信息
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	var product models.UserBasic
+	if err := dao.DB.Preload("LikedCommodities").Where("user_identity = ?", userClaims.UserIdentity).
+		First(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	var likedCommodities []*models.CommodityBasic
+	likedCommodities = product.LikedCommodities
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "获取点赞的商品数据",
+		"data": likedCommodities,
+	})
+}
+
+// UsersUnlikePro
+// @Summary 取消点赞商品
+// @Description 用户取消点赞商品
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param commodity_identity query string true "商品标识"
+// @Success 200 {string} json {"code": 200, "msg": "取消点赞成功"}
+// @Failure 401 {string} json {"code": 401, "message": "未授权"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 409 {string} json {"code": 409, "msg": "该账号没有被注册"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/unlike/product [post]
+func (u BasicOperateUser) UsersUnlikePro(c *gin.Context) {
+	identity := c.Query("commodity_identity")
+	commodityID, err := strconv.Atoi(identity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "商品标识解析错误"})
+		return
+	}
+
+	// 解析用户信息
+	userClaim, exist := c.Get(pkg.UserClaimsContextKey)
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "msg": "未授权"})
+		return
+	}
+
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 检查用户是否已注册
+	userExists, _, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	if !userExists {
+		c.JSON(http.StatusConflict, gin.H{"code": http.StatusConflict, "msg": "该账号没有被注册"})
+		return
+	}
+
+	// 开启数据库事务
+	tx := dao.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 查询用户信息及点赞的商品
+	var user models.UserBasic
+	if err := tx.Preload("LikedCommodities").Where("user_identity = ?", userClaims.UserIdentity).
+		First(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	if user.ID == 0 {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"code": http.StatusNotFound, "msg": "未找到用户信息"})
+		return
+	}
+
+	// 查询被取消点赞的商品
+	var targetProduct models.CommodityBasic
+	if err := tx.Where("id = ?", uint(commodityID)).First(&targetProduct).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "查询商品失败"})
+		return
+	}
+
+	// 检查用户是否已经点赞过该商品
+	var liked bool
+	var likedIndex int
+	for i, likedProduct := range user.LikedCommodities {
+		if likedProduct.ID == uint(commodityID) {
+			liked = true
+			likedIndex = i
+			break
+		}
+	}
+
+	if !liked {
+		tx.Rollback()
+		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "未点赞过该商品"})
+		return
+	}
+
+	// 从关联表中删除点赞关系
+	if err := tx.Exec("DELETE FROM liked_commodity WHERE user_basic_id = ? AND commodity_basic_id = ?", user.ID, commodityID).Error; err != nil {
+		// 处理错误
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "取消点赞失败"})
+		return
+	}
+
+	// 更新商品的点赞数
+	targetProduct.LikeCount--
+	if err := tx.Save(&targetProduct).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "更新商品失败"})
+		return
+	}
+
+	// 在本地切片中删除取消点赞的商品
+	user.LikedCommodities = append(user.LikedCommodities[:likedIndex], user.LikedCommodities[likedIndex+1:]...)
+
+	// 更新用户信息
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "更新用户信息失败"})
+		return
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "事务提交失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "取消点赞成功"})
+}
+
+// UserCollectPro
+// @Summary 收藏商品
+// @Description 用户收藏商品
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param commodity_identity query string true "商品标识"
+// @Success 200 {string} json {"code": 200, "msg": "收藏成功"}
+// @Failure 401 {string} json {"code": 401, "message": "未授权"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 409 {string} json {"code": 409, "msg": "该账号没有被注册"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/collect/product [post]
+func (u BasicOperateUser) UserCollectPro(c *gin.Context) {
+	identity := c.Query("commodity_identity")
+	id, err := strconv.Atoi(identity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "message": "未授权"})
+		return
+	}
+
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	_, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	var pro models.CommodityBasic
+	if err := dao.DB.Where("id = ?", uint(id)).First(&pro).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	var product models.UserBasic
+	if err := dao.DB.Preload("CollectedCommodities").Where("user_identity = ?", userClaims.UserIdentity).
+		First(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// 检查用户是否已经收藏过该商品
+	for _, collectedProduct := range product.CollectedCommodities {
+		if collectedProduct.ID == uint(id) {
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "已经收藏过该商品"})
+			return
+		}
+	}
+
+	tx := dao.DB.Begin()
+
+	pro.CollectCount++
+	pro.UpdateCommodity(pro)
+
+	product.CollectedCommodities = append(product.CollectedCommodities, &pro)
+	existsuser.CollectedCommodities = product.CollectedCommodities
+	if err := existsuser.SaveUser(existsuser); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "提交事务失败"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "提交事务失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "收藏成功"})
+}
+
+// UserGetCollectPro
+// @Summary 获取用户收藏的商品数据
+// @Description 获取用户收藏的商品数据
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {string} models.UserBasic "获取收藏的商品数据"
+// @Failure 401 {string} json {"code": 401, "message": "未授权"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/get/collect/pro [get]
+func (u BasicOperateUser) UserGetCollectPro(c *gin.Context) {
+	// 解析用户信息
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	var product models.UserBasic
+	if err := dao.DB.Preload("CollectedCommodities").Where("user_identity = ?", userClaims.UserIdentity).
+		First(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	var collectedCommodities []*models.CommodityBasic
+	collectedCommodities = product.CollectedCommodities
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "获取收藏的商品数据",
+		"data": collectedCommodities,
+	})
+} // UsersUncollectPro
+// @Summary 取消收藏商品
+// @Description 用户取消收藏商品
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param commodity_identity query string true "商品标识"
+// @Success 200 {string} json {"code": 200, "msg": "取消收藏成功"}
+// @Failure 401 {string} json {"code": 401, "message": "未授权"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 409 {string} json {"code": 409, "msg": "该账号没有被注册"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/uncollect/product [post]
+func (u BasicOperateUser) UsersUncollectPro(c *gin.Context) {
+	identity := c.Query("commodity_identity")
+	commodityID, err := strconv.Atoi(identity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "商品标识解析错误"})
+		return
+	}
+
+	// 解析用户信息
+	userClaim, exist := c.Get(pkg.UserClaimsContextKey)
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "msg": "未授权"})
+		return
+	}
+
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 检查用户是否已注册
+	userExists, _, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	if !userExists {
+		c.JSON(http.StatusConflict, gin.H{"code": http.StatusConflict, "msg": "该账号没有被注册"})
+		return
+	}
+
+	// 开启数据库事务
+	tx := dao.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 查询用户信息及收藏的商品
+	var user models.UserBasic
+	if err := tx.Preload("CollectedCommodities").Where("user_identity = ?", userClaims.UserIdentity).
+		First(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	if user.ID == 0 {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"code": http.StatusNotFound, "msg": "未找到用户信息"})
+		return
+	}
+
+	// 查询被取消收藏的商品
+	var targetProduct models.CommodityBasic
+	if err := tx.Where("id = ?", uint(commodityID)).First(&targetProduct).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "查询商品失败"})
+		return
+	}
+
+	// 检查用户是否已经收藏过该商品
+	var collected bool
+	var collectedIndex int
+	for i, collectedProduct := range user.CollectedCommodities {
+		if collectedProduct.ID == uint(commodityID) {
+			collected = true
+			collectedIndex = i
+			break
+		}
+	}
+
+	if !collected {
+		tx.Rollback()
+		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "未收藏过该商品"})
+		return
+	}
+
+	// 从关联表中删除收藏关系
+	if err := tx.Exec("DELETE FROM collected_commodity WHERE user_basic_id = ? AND commodity_basic_id = ?", user.ID, commodityID).Error; err != nil {
+		// 处理错误
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "取消收藏失败"})
+		return
+	}
+
+	// 更新商品的收藏数
+	targetProduct.CollectCount--
+	if err := tx.Save(&targetProduct).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "更新商品失败"})
+		return
+	}
+
+	// 在本地切片中删除取消收藏的商品
+	user.CollectedCommodities = append(user.CollectedCommodities[:collectedIndex], user.CollectedCommodities[collectedIndex+1:]...)
+
+	// 更新用户信息
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "更新用户信息失败"})
+		return
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "事务提交失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "取消收藏成功"})
 }
