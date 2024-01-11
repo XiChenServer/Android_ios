@@ -49,7 +49,6 @@ type CommodityServer struct {
 // @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
 // @Router /user/adds/products [post]
 func (CommodityServer) UserAddsProducts(c *gin.Context) {
-	BucketName := "xichen-server"
 	// Parse user information
 	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
 	if !exists {
@@ -174,13 +173,21 @@ func (CommodityServer) UserAddsProducts(c *gin.Context) {
 	// ...
 
 	for _, file := range files {
-		objectKey := "your-prefix/" + file.Filename
+		// 保存文件到本地
+		localFilePath := "./picture/commodity/" + file.Filename
+		fmt.Println("sdf", localFilePath)
+		err = c.SaveUploadedFile(file, localFilePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		objectKey := "picture/commodity" + file.Filename
 		err = pkg.UploadAllFile(objectKey, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fileURL := fmt.Sprintf("https://%s/%s", BucketName, objectKey)
+		fileURL := fmt.Sprintf("http://%s", objectKey)
 		fmt.Println(fileURL)
 		media := models.MediaBasic{Image: fileURL}
 		product.Media = append(product.Media, media)
@@ -393,7 +400,6 @@ func (CommodityServer) GetUserAllProList(c *gin.Context) {
 // @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
 // @Router /user/modifies/products [post]
 func (CommodityServer) UserModifiesProducts(c *gin.Context) {
-	BucketName := "xichen-server"
 	// Parse user information
 	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
 	if !exists {
@@ -571,13 +577,23 @@ func (CommodityServer) UserModifiesProducts(c *gin.Context) {
 	// ...
 
 	for _, file := range files {
-		objectKey := "your-prefix/" + file.Filename
+
+		// 保存文件到本地
+		localFilePath := "./picture/commodity/" + file.Filename
+		fmt.Println("sdf", localFilePath)
+		err = c.SaveUploadedFile(file, localFilePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		objectKey := "picture/commodity" + file.Filename
+		err = pkg.UploadAllFile(objectKey, file)
 		err = pkg.UploadAllFile(objectKey, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fileURL := fmt.Sprintf("https://%s/%s", BucketName, objectKey)
+		fileURL := fmt.Sprintf("https://%s", objectKey)
 		media := models.MediaBasic{Image: fileURL}
 		product.Media = append(product.Media, media)
 	}
