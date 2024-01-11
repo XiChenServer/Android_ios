@@ -15,7 +15,7 @@ import (
 // @contact.email support@swagger.io
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host 192.168.0.146:13000
+// @host 127.0.0.1:13000
 // @BasePath
 func main() {
 	models.Init()

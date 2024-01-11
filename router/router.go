@@ -7,13 +7,23 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	gs "github.com/swaggo/gin-swagger"
+	"time"
 )
 
 func Router() *gin.Engine {
 	r := gin.Default()
-	r.Use(CORSMiddleware())
-	// 使用 CORS 中间件
-	r.Use(cors.Default())
+	// 将 /picture 路径下的所有文件映射到路由上
+	r.StaticFS("/picture", gin.Dir("picture", true))
+	//	r.Use(CORSMiddleware())
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:13000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	r.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("/send_phone_code", servers.BasicServer{}.SendPhoneCode)
@@ -30,6 +40,7 @@ func Router() *gin.Engine {
 	r.POST("/search/product", servers.SearchOperate{}.SearchProduct)
 	r.POST("/get/user_all_pro_list", servers.CommodityServer{}.GetUserAllProList)
 	r.POST("/get/product/by_category", servers.CategoryServer{}.FindProByCategory)
+	r.POST("/get/avatar/local", servers.BasicOperateUser{}.UserGetAvatarLocal)
 	//r.POST("/user/like/product ", servers.BasicOperateUser{}.UsersLikePro)
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
@@ -49,6 +60,8 @@ func Router() *gin.Engine {
 		user.POST("/collect/product", servers.BasicOperateUser{}.UserCollectPro)
 		user.GET("/get/collect/pro", servers.BasicOperateUser{}.UserGetCollectPro)
 		user.POST("/uncollect/product", servers.BasicOperateUser{}.UsersUncollectPro)
+		//user.POST("/upload/local", servers.BasicOperateUser{}.UserUploadLocal)
+
 	}
 	admin := r.Group("/admin")
 	{
@@ -59,18 +72,18 @@ func Router() *gin.Engine {
 	return r
 }
 
-// CORSMiddleware 中间件处理CORS
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
-}
+//// CORSMiddleware 中间件处理CORS
+//func CORSMiddleware() gin.HandlerFunc {
+//	return func(c *gin.Context) {
+//		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+//		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+//		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+//
+//		if c.Request.Method == "OPTIONS" {
+//			c.AbortWithStatus(204)
+//			return
+//		}
+//
+//		c.Next()
+//	}
+//}

@@ -881,6 +881,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/get/avatar/local": {
+            "post": {
+                "description": "获取用户头像文件名等信息",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取用户头像信息",
+                "operationId": "user-get-avatar-local",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户账号",
+                        "name": "account",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"请求错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "code\": 403, \"msg\": \"禁止访问\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": 404, \"msg\": \"文件不存在\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/get/collect/pro": {
             "get": {
                 "description": "获取用户收藏的商品数据",
@@ -1729,6 +1786,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/upload/local": {
+            "post": {
+                "description": "上传用户头像并更新用户信息",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "上传用户头像",
+                "operationId": "user-upload-local",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "用户头像文件",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"文件上传成功\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"请求错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "code\": 403, \"msg\": \"禁止访问\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "code\": 413, \"msg\": \"文件大小超出限制\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/uploads/avatar": {
             "post": {
                 "security": [
@@ -1941,7 +2068,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "192.168.0.146:13000",
+	Host:             "127.0.0.1:13000",
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "淘牛马",

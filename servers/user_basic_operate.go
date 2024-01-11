@@ -377,6 +377,7 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
 		return
 	}
+
 	// 获取所有上传的文件
 	form := c.Request.MultipartForm
 	files := form.File["files"]
@@ -392,15 +393,27 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件大小超出限制"})
 		return
 	}
-	objectKey := "your-prefix/" + file.Filename
+
+	// 保存文件到本地
+	localFilePath := "./picture/avatar/" + file.Filename
+	fmt.Println("sdf", localFilePath)
+	err = c.SaveUploadedFile(file, localFilePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	// 构建上传路径，直接使用文件名，确保包含目录信息
+	objectKey := "picture/avatar/" + file.Filename
+	// 上传本地文件到服务器
+	//	objectKey := "/picture/avatar/" + file.Filename
 	err = pkg.UploadAllFile(objectKey, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	fileURL := fmt.Sprintf("https://%s/%s", userClaims.Account, objectKey)
+	fileURL := fmt.Sprintf("http://127.0.0.1:13000/%s", objectKey)
 	// 检查账号是否已经注册
-	fmt.Println(fileURL)
+	fmt.Println("URL", fileURL)
 	exists, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -428,6 +441,114 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "文件上传成功"})
 }
+
+/*
+// UserUploadLocal
+// @Summary 上传用户头像
+// @Tags 用户私有方法
+// @Description 上传用户头像并更新用户信息
+// @ID user-upload-local
+// @Accept multipart/form-data
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param files formData file true "用户头像文件"
+// @Success 200 {string} json {"code": 200, "msg": "文件上传成功"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 401 {string} json {"code": 401, "msg": "未授权"}
+// @Failure 403 {string} json {"code": 403, "msg": "禁止访问"}
+// @Failure 413 {string} json {"code": 413, "msg": "文件大小超出限制"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/upload/local [post]
+func (BasicOperateUser) UserUploadLocal(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	const MaxFileSize = 10 << 20
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 解析多部分表单数据
+	err := c.Request.ParseMultipartForm(10 << 20) // 限制最大文件大小为 10MB
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 获取所有上传的文件
+	form := c.Request.MultipartForm
+	files := form.File["files"]
+	if len(files) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 处理第一个上传的文件
+	file := files[0]
+
+	// 检查文件大小
+	if file.Size > MaxFileSize {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件大小超出限制"})
+		return
+	}
+	suffix := ".png"
+	ofilName := file.Filename
+	tem := strings.Split(ofilName, ".")
+	if len(tem) > 1 {
+		suffix = "." + tem[len(tem)-1]
+	}
+	fileName := fmt.Sprintf("%d%04d%s", time.Now().Unix(), rand.Int31(), suffix)
+	dstFile, _ := os.Create("./asset/upload/" + fileName)
+
+	if err != nil {
+		// 错误处理
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+	defer dstFile.Close()
+
+	srcFile, err := file.Open()
+	if err != nil {
+		// 错误处理
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+	defer srcFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	url := "./asset/upload/" + fileName
+	exists, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if !exists {
+		// 用户已经存在，你可以通过 existingUser 使用用户信息
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	existsuser.Avatar = url
+	fmt.Println("fsddf", url)
+	if err = existsuser.SaveUser(existsuser); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "头像上传成功"})
+}*/
 
 // UserGetAvatar 从阿里云服务器获取用户头像
 // @Summary 获取用户头像
@@ -509,6 +630,50 @@ func (BasicOperateUser) UserGetAvatar(c *gin.Context) {
 
 	// 返回文件内容给客户端
 	c.Data(http.StatusOK, "application/octet-stream", fileContent)
+}
+
+// UserGetAvatarLocal
+// @Summary 获取用户头像信息
+// @Description 获取用户头像文件名等信息
+// @ID user-get-avatar-local
+// @Tag 用户私有信息
+// @Produce json
+// @Param account query string true "用户账号"
+// @Success 200 {file} application/octet-stream "头像加载成功"
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 401 {string} json {"code": 401, "msg": "未授权"}
+// @Failure 403 {string} json {"code": 403, "msg": "禁止访问"}
+// @Failure 404 {string} json {"code": 404, "msg": "文件不存在"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/get/avatar/local [post]
+func (BasicOperateUser) UserGetAvatarLocal(c *gin.Context) {
+	account := c.Query("account")
+
+	exists, existsuser, err := models.UserBasic{}.FindUserByAccount(account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": http.StatusInternalServerError,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if !exists {
+		// 用户已经存在，你可以通过 existingUser 使用用户信息
+		c.JSON(http.StatusNotFound, gin.H{
+			"code": "404",
+			"msg":  "该账号没有被注册",
+		})
+		return
+	}
+	fileName := existsuser.Avatar
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "头像加载成功",
+		"data": map[string]interface{}{
+			"AvatarUrl": fileName,
+		},
+	})
+	return
 }
 
 func (BasicOperateUser) UserModifyPassword(c *gin.Context) {

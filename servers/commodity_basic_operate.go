@@ -616,9 +616,6 @@ func ClearExistingAssociations(productID uint) error {
 
 	return nil
 }
-func (CommodityServer) UserDelPro(c *gin.Context) {
-
-}
 
 // UserDeletesProduct
 // @Summary 用户删除商品
