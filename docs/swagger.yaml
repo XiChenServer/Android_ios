@@ -609,6 +609,24 @@ paths:
       summary: 发送用户消息
       tags:
       - 用户私有方法
+  /user/chat/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件到指定的存储位置（本地或其他存储服务）。
+      operationId: upload
+      parameters:
+      - description: 上传的文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses: {}
+      summary: 上传文件
+      tags:
+      - 用户私有方法
   /user/collect/product:
     post:
       description: 用户收藏商品

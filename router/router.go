@@ -91,6 +91,7 @@ func Router() *gin.Engine {
 			chat.GET("/sendMsg", servers.UserChatServer{}.SendMsg)
 			chat.GET("/sendUserMsg", servers.UserChatServer{}.SendUserMsg)
 			chat.POST("/redisMsg", servers.UserChatServer{}.RedisMsg)
+			r.POST("/upload", servers.Upload)
 		}
 	}
 

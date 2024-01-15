@@ -19,6 +19,15 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Upload
+// @Summary 上传文件
+// @Tags 用户私有方法
+// @Description 上传文件到指定的存储位置（本地或其他存储服务）。
+// @ID upload
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "上传的文件"
+// @Router /user/chat/upload [post]
 func Upload(c *gin.Context) {
 	UploadLocal(c)
 	//UploadOOS(c)

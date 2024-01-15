@@ -779,6 +779,32 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/user/chat/upload": {
+            "post": {
+                "description": "上传文件到指定的存储位置（本地或其他存储服务）。",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "上传文件",
+                "operationId": "upload",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "上传的文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/user/collect/product": {
             "post": {
                 "description": "用户收藏商品",
