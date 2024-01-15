@@ -135,6 +135,35 @@
                 }
             }
         },
+        "/chat/basic/create": {
+            "post": {
+                "description": "从现有用户基本信息中创建用户聊天账号信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户聊天基础"
+                ],
+                "summary": "创建用户聊天账号信息",
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"用户聊天账号信息创建成功\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/get/one_product_info": {
             "post": {
                 "description": "根据商品的唯一标识符获取特定商品的详细信息。",
@@ -230,6 +259,21 @@
                     },
                     "500": {
                         "description": "code\":500,\"msg\":\"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/index": {
+            "get": {
+                "tags": [
+                    "首页"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "string"
                         }
@@ -612,6 +656,120 @@
                         }
                     }
                 }
+            }
+        },
+        "/user/chat/redisMsg": {
+            "post": {
+                "description": "从Redis中获取两个用户之间的聊天消息。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "从Redis获取用户聊天消息",
+                "operationId": "getRedisMessages",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户A的ID",
+                        "name": "userIdA",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "用户B的ID",
+                        "name": "userIdB",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "消息起始位置",
+                        "name": "start",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "消息结束位置",
+                        "name": "end",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否反转消息顺序",
+                        "name": "isRev",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/chat/sendMsg": {
+            "get": {
+                "description": "建立WebSocket连接并发送消息。",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "通过WebSocket发送消息",
+                "operationId": "sendWebSocketMessage",
+                "responses": {
+                    "101": {
+                        "description": "WebSocket连接已建立",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "WebSocket连接失败",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/chat/sendUserMsg": {
+            "get": {
+                "description": "通过WebSocket向指定用户发送消息。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "发送用户消息",
+                "operationId": "sendUserMsg",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "接收者的用户ID",
+                        "name": "userId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/user/collect/product": {
@@ -1766,76 +1924,6 @@
                     },
                     "409": {
                         "description": "code\": 409, \"msg\": \"该账号没有被注册\"}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/upload/local": {
-            "post": {
-                "description": "上传用户头像并更新用户信息",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "用户私有方法"
-                ],
-                "summary": "上传用户头像",
-                "operationId": "user-upload-local",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer {token}",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "用户头像文件",
-                        "name": "files",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "code\": 200, \"msg\": \"文件上传成功\"}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "code\": 400, \"msg\": \"请求错误\"}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "code\": 401, \"msg\": \"未授权\"}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "code\": 403, \"msg\": \"禁止访问\"}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "413": {
-                        "description": "code\": 413, \"msg\": \"文件大小超出限制\"}",
                         "schema": {
                             "type": "string"
                         }

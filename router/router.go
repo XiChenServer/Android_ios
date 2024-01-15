@@ -1,33 +1,40 @@
 package router
 
 import (
-	"Android_ios/middleware"
 	"Android_ios/servers"
-	"github.com/gin-contrib/cors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	swaggerFiles "github.com/swaggo/files"
 	gs "github.com/swaggo/gin-swagger"
-	"time"
+	"net/http"
 )
+
+var upGrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func Router() *gin.Engine {
 	r := gin.Default()
-	// 将 /picture 路径下的所有文件映射到路由上
+
 	r.StaticFS("/picture", gin.Dir("picture", true))
-	//	r.Use(CORSMiddleware())
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:13000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	//r.Use(cors.New(cors.Config{
+	//	AllowOrigins:     []string{"http://localhost:13000"},
+	//	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	//	AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
+	//	ExposeHeaders:    []string{"Content-Length"},
+	//	AllowCredentials: true,
+	//	MaxAge:           12 * time.Hour,
+	//}))
 
 	r.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("/send_phone_code", servers.BasicServer{}.SendPhoneCode)
 	r.POST("/send_email_code", servers.BasicServer{}.SendEmailCode)
+
+	r.POST("/chat/basic/create", servers.UserChatBasicServer{}.CreateUserChat)
 
 	r.POST("/user/register/phone", servers.BasicOperateUser{}.UserRegisterByPhone)
 
@@ -41,8 +48,27 @@ func Router() *gin.Engine {
 	r.POST("/get/user_all_pro_list", servers.CommodityServer{}.GetUserAllProList)
 	r.POST("/get/product/by_category", servers.CategoryServer{}.FindProByCategory)
 	r.POST("/get/avatar/local", servers.BasicOperateUser{}.UserGetAvatarLocal)
-	//r.POST("/user/like/product ", servers.BasicOperateUser{}.UsersLikePro)
-	user := r.Group("/user", middleware.AuthMiddleware())
+	r.GET("/123", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"msg": "123",
+		})
+	})
+	r.GET("/ws", func(c *gin.Context) {
+		ws, err := upGrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer func(ws *websocket.Conn) {
+			err = ws.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}(ws)
+		//servers.MsgHandler(c, ws)
+	})
+
+	user := r.Group("/user")
 	{
 		user.PUT("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
 		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
@@ -60,30 +86,20 @@ func Router() *gin.Engine {
 		user.POST("/collect/product", servers.BasicOperateUser{}.UserCollectPro)
 		user.GET("/get/collect/pro", servers.BasicOperateUser{}.UserGetCollectPro)
 		user.POST("/uncollect/product", servers.BasicOperateUser{}.UsersUncollectPro)
-		//user.POST("/upload/local", servers.BasicOperateUser{}.UserUploadLocal)
-
+		chat := user.Group("/chat")
+		{
+			chat.GET("/sendMsg", servers.UserChatServer{}.SendMsg)
+			chat.GET("/sendUserMsg", servers.UserChatServer{}.SendUserMsg)
+			chat.POST("/redisMsg", servers.UserChatServer{}.RedisMsg)
+		}
 	}
+
 	admin := r.Group("/admin")
 	{
 		admin.POST("/add_new_category_info", servers.AdminServer{}.AddNewCategoryInfo)
 		admin.POST("/add_new_son_category_info", servers.AdminServer{}.AddNewSonCategoryInfo)
 		admin.GET("/get/all_list_categories", servers.AdminServer{}.GetAllCategoryList)
 	}
+
 	return r
 }
-
-//// CORSMiddleware 中间件处理CORS
-//func CORSMiddleware() gin.HandlerFunc {
-//	return func(c *gin.Context) {
-//		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-//		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-//		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-//
-//		if c.Request.Method == "OPTIONS" {
-//			c.AbortWithStatus(204)
-//			return
-//		}
-//
-//		c.Next()
-//	}
-//}

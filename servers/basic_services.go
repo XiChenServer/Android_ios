@@ -2,7 +2,9 @@ package servers
 
 import (
 	"Android_ios/dao"
+	"Android_ios/models"
 	"Android_ios/pkg"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -98,4 +100,33 @@ func (BasicServer) SendEmailCode(c *gin.Context) {
 		"msg":  "验证码已经成功发送",
 	})
 	return
+}
+
+func (BasicServer) RenewUserChat(c *gin.Context) {
+	var users []models.UserBasic
+	err := dao.DB.Find(&users).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	for _, user := range users {
+		fmt.Println(user)
+		err := models.UserChatBasic{}.CreateUser(user).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code": 500,
+				"msg":  "服务器内部错误",
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "用户聊天信息更新成功",
+	})
 }

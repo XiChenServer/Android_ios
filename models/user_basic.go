@@ -52,6 +52,7 @@ type UserBasic struct {
 	Address              JSONAddress       `gorm:"column:address;type:json;" json:"address"`
 	Score                float32           `gorm:"column:score;type:decimal(10,2);" json:"score"`
 	Name                 string            `gorm:"column:name;type:varchar(24);" json:"name"`
+	UserChatBasic        UserChatBasic     `gorm:"foreignKey:UserIdentity"`
 	Commodity            []*CommodityBasic `gorm:"foreignKey:CommodityIdentity;references:UserIdentity"`
 	LikedCommodities     []*CommodityBasic `gorm:"many2many:liked_commodity;"`     //foreignKey:UserIdentity;joinForeignKey:LikedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
 	CollectedCommodities []*CommodityBasic `gorm:"many2many:collected_commodity;"` //foreignKey:UserIdentity;joinForeignKey:CollectedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
@@ -64,13 +65,27 @@ func (UserBasic) TableName() string {
 
 func (UserBasic) SaveUser(user *UserBasic) error {
 	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
-	db := dao.DB
 
-	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
-	if err := db.Save(user).Error; err != nil {
+	db := dao.DB
+	var u1 UserBasic
+	err := dao.DB.Where("phone_number = ?", user.PhoneNumber).First(&u1).Error
+	if err != nil {
 		return err
 	}
-
+	user.Password = u1.Password
+	var userChat = &UserChatBasic{
+		UserIdentity: user.UserIdentity,
+		NickName:     user.NickName,
+		Account:      user.Account,
+		Avatar:       user.Avatar,
+	}
+	if err := db.Updates(userChat).Error; err != nil {
+		return err
+	}
+	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
+	if err := db.Updates(user).Error; err != nil {
+		return err
+	}
 	return nil
 }
 

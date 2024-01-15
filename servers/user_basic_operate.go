@@ -121,6 +121,23 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		})
 		return
 	}
+	var user1 models.UserBasic
+	err = dao.DB.Where("account = ?", account).Find(&user1).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+	err = models.UserChatBasic{}.CreateUser(user1).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": "200",
 		"msg":  "注册成功",

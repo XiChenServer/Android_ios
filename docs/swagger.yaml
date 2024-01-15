@@ -184,6 +184,25 @@ paths:
       summary: 查看所有分类
       tags:
       - 管理员私有方法
+  /chat/basic/create:
+    post:
+      consumes:
+      - application/json
+      description: 从现有用户基本信息中创建用户聊天账号信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "用户聊天账号信息创建成功"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      summary: 创建用户聊天账号信息
+      tags:
+      - 用户聊天基础
   /get/one_product_info:
     post:
       description: 根据商品的唯一标识符获取特定商品的详细信息。
@@ -251,6 +270,15 @@ paths:
       summary: 获取用户所有商品信息
       tags:
       - 商品
+  /index:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      tags:
+      - 首页
   /products/simple_info:
     get:
       description: Retrieve a list of all products with basic information and categories.
@@ -501,6 +529,84 @@ paths:
           schema:
             type: string
       summary: 更换用户手机号
+      tags:
+      - 用户私有方法
+  /user/chat/redisMsg:
+    post:
+      consumes:
+      - application/json
+      description: 从Redis中获取两个用户之间的聊天消息。
+      operationId: getRedisMessages
+      parameters:
+      - description: 用户A的ID
+        in: formData
+        name: userIdA
+        required: true
+        type: integer
+      - description: 用户B的ID
+        in: formData
+        name: userIdB
+        required: true
+        type: integer
+      - description: 消息起始位置
+        in: formData
+        name: start
+        required: true
+        type: integer
+      - description: 消息结束位置
+        in: formData
+        name: end
+        required: true
+        type: integer
+      - description: 是否反转消息顺序
+        in: formData
+        name: isRev
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回
+          schema:
+            type: string
+      summary: 从Redis获取用户聊天消息
+      tags:
+      - 用户私有方法
+  /user/chat/sendMsg:
+    get:
+      description: 建立WebSocket连接并发送消息。
+      operationId: sendWebSocketMessage
+      produces:
+      - text/plain
+      responses:
+        "101":
+          description: WebSocket连接已建立
+          schema:
+            type: string
+        "403":
+          description: WebSocket连接失败
+          schema:
+            type: string
+      summary: 通过WebSocket发送消息
+      tags:
+      - 用户私有方法
+  /user/chat/sendUserMsg:
+    get:
+      consumes:
+      - application/json
+      description: 通过WebSocket向指定用户发送消息。
+      operationId: sendUserMsg
+      parameters:
+      - description: 接收者的用户ID
+        in: query
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: 发送用户消息
       tags:
       - 用户私有方法
   /user/collect/product:
@@ -1273,53 +1379,6 @@ paths:
           schema:
             type: string
       summary: 向用户上传地址信息
-      tags:
-      - 用户私有方法
-  /user/upload/local:
-    post:
-      consumes:
-      - multipart/form-data
-      description: 上传用户头像并更新用户信息
-      operationId: user-upload-local
-      parameters:
-      - description: Bearer {token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: 用户头像文件
-        in: formData
-        name: files
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'code": 200, "msg": "文件上传成功"}'
-          schema:
-            type: string
-        "400":
-          description: 'code": 400, "msg": "请求错误"}'
-          schema:
-            type: string
-        "401":
-          description: 'code": 401, "msg": "未授权"}'
-          schema:
-            type: string
-        "403":
-          description: 'code": 403, "msg": "禁止访问"}'
-          schema:
-            type: string
-        "413":
-          description: 'code": 413, "msg": "文件大小超出限制"}'
-          schema:
-            type: string
-        "500":
-          description: 'code": 500, "msg": "服务器内部错误"}'
-          schema:
-            type: string
-      summary: 上传用户头像
       tags:
       - 用户私有方法
   /user/uploads/avatar:
