@@ -42,7 +42,7 @@ type CommodityBasic struct {
 	Number            int         `gorm:"column:number" json:"number"`                                                // Number 表示商品的数量或数量。
 	Information       string      `gorm:"column:information;type:text" json:"information"`                            // Information 提供有关商品的额外详细信息。
 	Price             float64     `gorm:"column:price;type:decimal(10,2)" json:"price"`                               // Price 表示商品的价格。
-	SoldStatus        int         `gorm:"column:sold_status" json:"sold_status"`                                      // SoldStatus 表示商品是否已售出的状态。1:正在出售中。2：正在拍卖中。3：交易完成
+	SoldStatus        int         `gorm:"column:sold_status" json:"sold_status"`                                      // SoldStatus 表示商品是否已售出的状态。1:正在出售中。2：正在拍卖中。3: 提交订单，正在发货4：交易完成
 	Media             JSONMedia   `gorm:"column:media;type:json" json:"media"`                                        // Media 包含与商品相关的嵌套媒体信息。
 	IsAuction         int         `gorm:"column:is_auction" json:"is_auction"`                                        // IsAuction 表示商品是否属于拍卖。
 	Address           JSONAddress `gorm:"column:address;type:json" json:"address"`                                    // Address 包含与商品相关的嵌套地址信息。

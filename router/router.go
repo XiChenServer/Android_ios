@@ -93,6 +93,13 @@ func Router() *gin.Engine {
 			chat.POST("/redisMsg", servers.UserChatServer{}.RedisMsg)
 			r.POST("/upload", servers.Upload)
 		}
+		order := r.Group("/order")
+		{
+			order.POST("/create", servers.OrderBasicServer{}.UserCreateOrder)
+			order.POST("/delete", servers.OrderBasicServer{}.UserDeleteOrder)
+			order.GET("/find/AllBuyOrder", servers.OrderBasicServer{}.FindAllBuyOrder)
+			order.GET("/find/AllSellOrders", servers.OrderBasicServer{}.FindAllSellOrders)
+		}
 	}
 
 	admin := r.Group("/admin")

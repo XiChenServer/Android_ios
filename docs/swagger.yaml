@@ -1241,6 +1241,133 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: 修改用户信息
+  /user/order/create:
+    post:
+      description: 创建订单接口
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 买家身份
+        in: query
+        name: buyerIdentity
+        required: true
+        type: string
+      - description: 卖家身份
+        in: query
+        name: sellerIdentity
+        required: true
+        type: string
+      - description: 商品ID
+        in: query
+        name: productID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"订单创建完成"}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"卖家未拥有该商品"}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 创建订单
+      tags:
+      - 订单
+  /user/order/delete:
+    post:
+      consumes:
+      - application/json
+      description: 删除订单接口
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 订单身份
+        in: query
+        name: orderIdentity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"订单删除成功"}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"订单ID参数错误"}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 删除订单
+      tags:
+      - 订单
+  /user/order/find/AllBuyOrder:
+    get:
+      description: 查询用户的所有购买订单
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户身份
+        in: query
+        name: userIdentity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"成功获取购买订单","orders":{}}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 查询用户的所有购买订单
+      tags:
+      - 订单
+  /user/order/find/AllSellOrders:
+    get:
+      description: 查询所有出售订单
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"成功获取所有出售订单","orders":{}}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 查询所有出售订单
+      tags:
+      - 订单
   /user/register/phone:
     post:
       consumes:
