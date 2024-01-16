@@ -83,6 +83,13 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		})
 		return
 	}
+	if product.SoldStatus != 1 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
 	if product.CommodityIdentity != seller.UserIdentity {
 		log.Println("Product does not belong to the seller.")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -162,7 +169,14 @@ func (OrderBasicServer) UserDeleteOrder(c *gin.Context) {
 		})
 		return
 	}
-
+	var product models.CommodityBasic
+	if err := dao.DB.Where(" id = ?", order.ProductIdentity).Find(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
 	// 删除订单
 	if err := dao.DB.Delete(&order).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -171,7 +185,15 @@ func (OrderBasicServer) UserDeleteOrder(c *gin.Context) {
 		})
 		return
 	}
-
+	product.SoldStatus = 1
+	err := dao.DB.Updates(&product).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "订单删除成功",
