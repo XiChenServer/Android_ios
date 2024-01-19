@@ -20,7 +20,6 @@ type OrderBasicServer struct {
 // @Tags 订单
 // @Produce json
 // @Param Authorization header string true "Bearer {token}"
-// @Param buyerIdentity query string true "买家身份"
 // @Param sellerIdentity query string true "卖家身份"
 // @Param productID query string true "商品ID"
 // @Success 200 {string} json {"code":200,"msg":"订单创建完成"}
@@ -44,7 +43,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 
 	var buyer models.UserBasic
 	if err := dao.DB.Where("user_identity = ?", userClaims.UserIdentity).Find(&buyer).Error; err != nil {
-
+		log.Println("Error querying buyer:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
@@ -73,7 +72,28 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		})
 		return
 	}
+	// 查询购买者的所有订单信息
+	var buyerOrders []models.Order
+	if err := dao.DB.Where("buyer_identity = ?", userClaims.UserIdentity).Find(&buyerOrders).Error; err != nil {
+		log.Println("Error querying buyer's orders:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
 
+	// 遍历订单，检查是否存在相同的产品ID
+	for _, existingOrder := range buyerOrders {
+		if existingOrder.ProductIdentity == uint(productID) {
+			log.Println("Order already exists for the product.")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code": 400,
+				"msg":  "订单已存在",
+			})
+			return
+		}
+	}
 	var product models.CommodityBasic
 	if err := dao.DB.Where("id = ?", productID).Find(&product).Error; err != nil {
 		log.Println("Error querying product:", err)
@@ -84,6 +104,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		return
 	}
 	if product.SoldStatus != 1 {
+		log.Println("Modify error")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
@@ -125,11 +146,21 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 	product.SoldStatus = 4
 	err = dao.DB.Updates(&product).Error
 	if err != nil {
+		log.Println("Error updating product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
 		})
 		return
+	}
+	// 订单创建成功后发送消息到 Kafka
+	topic := "order-created"
+	message := fmt.Sprintf("Order created: %s", order.OrderIdentity)
+
+	err = dao.ProduceMessage(topic, message)
+	if err != nil {
+		log.Println("Error producing Kafka message: ", err)
+		// 处理消息发送失败的情况
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
@@ -206,7 +237,6 @@ func (OrderBasicServer) UserDeleteOrder(c *gin.Context) {
 // @Tags 订单
 // @Produce json
 // @Param Authorization header string true "Bearer {token}"
-// @Param userIdentity query string true "用户身份"
 // @Success 200 {string} json {"code":200,"msg":"成功获取购买订单","orders":{}}
 // @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
 // @Router /user/order/find/AllBuyOrder [get]
@@ -224,10 +254,9 @@ func (OrderBasicServer) FindAllBuyOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
 		return
 	}
-	userIdentity := c.Query(userClaims.UserIdentity)
 
 	// 调用GetUserBuyOrders函数获取用户的所有购买订单
-	orders, err := GetUserBuyOrders(userIdentity)
+	orders, err := GetUserBuyOrders(userClaims.UserIdentity)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"Android_ios/middleware"
 	"Android_ios/servers"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -68,7 +69,7 @@ func Router() *gin.Engine {
 		//servers.MsgHandler(c, ws)
 	})
 
-	user := r.Group("/user")
+	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 		user.PUT("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
 		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
@@ -93,7 +94,7 @@ func Router() *gin.Engine {
 			chat.POST("/redisMsg", servers.UserChatServer{}.RedisMsg)
 			r.POST("/upload", servers.Upload)
 		}
-		order := r.Group("/order")
+		order := user.Group("/order")
 		{
 			order.POST("/create", servers.OrderBasicServer{}.UserCreateOrder)
 			order.POST("/delete", servers.OrderBasicServer{}.UserDeleteOrder)

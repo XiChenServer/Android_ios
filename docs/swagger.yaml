@@ -103,7 +103,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: 淘牛马
+  title: 牧牛流马(Herding_cattle_and_straying_horses)
   version: "1.0"
 paths:
   /admin/add_new_category_info:
@@ -1250,11 +1250,6 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: 买家身份
-        in: query
-        name: buyerIdentity
-        required: true
-        type: string
       - description: 卖家身份
         in: query
         name: sellerIdentity
@@ -1324,11 +1319,6 @@ paths:
       - description: Bearer {token}
         in: header
         name: Authorization
-        required: true
-        type: string
-      - description: 用户身份
-        in: query
-        name: userIdentity
         required: true
         type: string
       produces:

@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "用于家畜交易",
-        "title": "淘牛马",
+        "title": "牧牛流马(Herding_cattle_and_straying_horses)",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "phone_number 15294440097",
@@ -1746,13 +1746,6 @@
                     },
                     {
                         "type": "string",
-                        "description": "买家身份",
-                        "name": "buyerIdentity",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "卖家身份",
                         "name": "sellerIdentity",
                         "in": "query",
@@ -1855,13 +1848,6 @@
                         "description": "Bearer {token}",
                         "name": "Authorization",
                         "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户身份",
-                        "name": "userIdentity",
-                        "in": "query",
                         "required": true
                     }
                 ],

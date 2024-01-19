@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"bufio"
@@ -7,9 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"testing"
 )
 
-func main() {
+func Test_kafka(t *testing.T) {
 	// 创建 Kafka 生产者
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",

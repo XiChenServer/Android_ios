@@ -1753,13 +1753,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "买家身份",
-                        "name": "buyerIdentity",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "卖家身份",
                         "name": "sellerIdentity",
                         "in": "query",
@@ -1862,13 +1855,6 @@ const docTemplate = `{
                         "description": "Bearer {token}",
                         "name": "Authorization",
                         "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户身份",
-                        "name": "userIdentity",
-                        "in": "query",
                         "required": true
                     }
                 ],
@@ -2375,7 +2361,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "127.0.0.1:13000",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "淘牛马",
+	Title:            "牧牛流马(Herding_cattle_and_straying_horses)",
 	Description:      "用于家畜交易",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
