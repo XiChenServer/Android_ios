@@ -4,6 +4,7 @@ import (
 	"Android_ios/middleware"
 	"Android_ios/servers"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	swaggerFiles "github.com/swaggo/files"
@@ -21,14 +22,8 @@ func Router() *gin.Engine {
 	r := gin.Default()
 
 	r.StaticFS("/picture", gin.Dir("picture", true))
-	//r.Use(cors.New(cors.Config{
-	//	AllowOrigins:     []string{"http://localhost:13000"},
-	//	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	//	AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
-	//	ExposeHeaders:    []string{"Content-Length"},
-	//	AllowCredentials: true,
-	//	MaxAge:           12 * time.Hour,
-	//}))
+	// 使用 CORS 中间件处理跨域请求
+	r.Use(cors.Default())
 
 	r.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 

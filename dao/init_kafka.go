@@ -22,7 +22,6 @@ func initKafka() *kafka.Producer {
 			log.Fatal("Error creating Kafka producer: ", err)
 		}
 	}
-
 	return producer
 }
 
