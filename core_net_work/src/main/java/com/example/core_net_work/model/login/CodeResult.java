@@ -8,4 +8,5 @@ import com.example.core_net_work.model.BaseResult;
  * @Version 1.0
  */
 public class CodeResult extends BaseResult {
+
 }

@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="Theme.SellCowHourse" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
@@ -35,7 +35,7 @@
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@style/ActivityAnimation</item>
-
+        <item name="actionSheetStyle">@style/ActionSheetStyleiOS7</item>
     </style>
 
     <style name="ActivityAnimation">
@@ -43,4 +43,7 @@
         <item name="android:activityOpenExitAnimation">@anim/set_out</item>
     </style>
 
+    <style name="App.Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/purple_200</item>
+    </style>
 </resources>

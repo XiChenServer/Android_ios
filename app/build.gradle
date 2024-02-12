@@ -10,6 +10,7 @@ android {
         applicationId "com.example.sellcowhourse"
         minSdk 26
         targetSdk 33
+        compileSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -31,6 +32,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    viewBinding {
+        enable = true
+    }
 }
 
 dependencies {
@@ -46,7 +50,6 @@ dependencies {
     implementation(project(":app_sell_pager"))
     implementation(project(":common_utls"))
     implementation(project(":core_net_work"))
-
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

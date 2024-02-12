@@ -1,13 +1,12 @@
 package com.example.app_login;
 
+import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
-import android.os.Bundle;
-
 import com.alibaba.android.arouter.facade.annotation.Route;
-import com.alibaba.android.arouter.launcher.ARouter;
 import com.example.app_login.adapter.LoginFragmentAdapter;
 import com.example.app_login.databinding.ActivityAppLoginMainBinding;
 import com.google.android.material.tabs.TabLayout;
@@ -31,6 +30,7 @@ public class AppLoginMainActivity extends AppCompatActivity {
         //初始化mmkv
         MMKV.initialize(this);
         init();
+//        Drawable
     }
 
     private void init() {

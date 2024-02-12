@@ -2,8 +2,6 @@ package com.example.app_login;
 
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,8 +18,6 @@ import com.example.core_net_work.model.login.CodeRequest;
 import com.example.core_net_work.model.login.CodeResult;
 import com.example.core_net_work.model.login.RegisterRequest;
 import com.example.core_net_work.model.login.RegisterResult;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.textfield.TextInputLayout;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -63,6 +59,9 @@ public class RegisterFragment extends Fragment {
 
             view = inflater.inflate(R.layout.fragment_register, container, false);
             binding = FragmentRegisterBinding.bind(view);
+            binding.progressRegisterBar.setVisibility(View.GONE);
+            binding.progressBar.setVisibility(View.GONE);
+
 //            binding.register.setEnabled(false);
 //            binding.etCode.addTextChangedListener(new TextWatcher() {
 //                @Override
@@ -101,6 +100,7 @@ public class RegisterFragment extends Fragment {
                                     binding.etCode.setText("");
                                     binding.etPsswrdToo.setText("");
                                     binding.etPsswrd.setText("");
+                                    binding.progressRegisterBar.setVisibility(View.GONE);
                                 }
                             }
 

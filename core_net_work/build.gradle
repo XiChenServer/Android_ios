@@ -25,7 +25,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    resourcePrefix "core_net_work_"
 
 }
 dependencies {
@@ -36,5 +35,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // Retrofit Gson转换库
     implementation("com.squareup.retrofit2:converter-gson:2.6.1")
+    //Glide
+//    implementation 'com.github.bumptech.glide:glide:4.16.0'
 }
 

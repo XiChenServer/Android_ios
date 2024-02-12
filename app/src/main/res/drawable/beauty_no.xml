@@ -1,0 +1,7 @@
+<!-- res/drawable/border.xml -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/beauty"
+    android:insetLeft="50dp"
+    android:insetTop="50dp"
+    android:insetRight="50dp"
+    android:insetBottom="50dp" />

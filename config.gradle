@@ -9,13 +9,11 @@ dependencies {
     //kotlin标准库
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0"
-
     //ARouter
     implementation 'com.alibaba:arouter-api:1.5.2'
     annotationProcessor 'com.alibaba:arouter-compiler:1.5.2'
     //mmkv
     implementation 'com.tencent:mmkv:1.3.2'
-
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -28,7 +26,17 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // Retrofit Gson转换库
     implementation("com.squareup.retrofit2:converter-gson:2.6.1")
+    //上拉框
+    implementation 'com.baoyz.actionsheet:library:1.1.7'
+    //更厉害的上拉框
+    implementation 'com.orhanobut:dialogplus:1.11@aar'
+    //最喜欢的上拉框
+    implementation "com.github.Kennyc1012:BottomSheetMenu:5.1"
+
+    //ratingbar
+    implementation 'me.zhanghai.android.materialratingbar:library:1.4.0'
 }
+
 android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -46,11 +54,15 @@ android {
                 if (isRunAlone.toBoolean()) {
                     manifest.srcFile 'src/main/AndroidManifest.xml'
                     java {
-                        //当此Module作为单独的Application运行时，加载 "src/component"路径下的文件
+                        //当此Module作为单独的Application运行时，加载 "src/main"路径下的文件
                         srcDirs 'src/main'
                     }
                 } else {
                     manifest.srcFile 'src/main/manifest/AndroidManifest.xml'
+//                    java {
+//                        //当此Module作为单独的Application运行时，加载 "src/main"路径下的文件
+//                        srcDirs 'src/debug'
+//                    }
                 }
             }
         }

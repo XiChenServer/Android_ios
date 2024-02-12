@@ -3,6 +3,7 @@ package com.example.app_login;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +21,8 @@ import com.example.core_net_work.MyRetrofit;
 import com.example.core_net_work.model.login.CodeRequest;
 import com.example.core_net_work.model.login.CodeResult;
 import com.example.core_net_work.model.login.LoginCodeRequest;
-import com.example.core_net_work.model.login.LoginRequest;
 import com.example.core_net_work.model.login.LoginResult;
 import com.tencent.mmkv.MMKV;
-
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -60,11 +58,14 @@ public class SignInCodeFragment extends Fragment {
         binding.btnCodeCode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String phone = binding.etPhoneLoginCode.getText().toString();
+
+                String phone = null;
+                phone = binding.etPhoneLoginCode.getText().toString();
                 if (!phone.equals("")) {
                     binding.btnCodeCode.setEnabled(false);
                     binding.btnCodeCode.setVisibility(View.GONE);
                     binding.progressBarCode.setVisibility(View.VISIBLE);
+
                     MyRetrofit.serviceAPI.getCode(new CodeRequest(phone)).enqueue(new Callback<CodeResult>() {
                         CountDownTimer countDownTimer;
 
@@ -86,10 +87,11 @@ public class SignInCodeFragment extends Fragment {
                             }.start();
                             binding.btnCodeCode.setVisibility(View.VISIBLE);
                             binding.progressBarCode.setVisibility(View.GONE);
-                            if (response.isSuccessful()) {
+//                            if (response.body().isSucceed()) {
                                 Toast.makeText(getActivity(), "发送成功", Toast.LENGTH_SHORT).show();
-                            }
-                            Toast.makeText(getActivity(), response.body().getMsg(), Toast.LENGTH_SHORT).show();
+//                            }
+//                            Toast.makeText(getActivity(), response.body().getMsg(), Toast.LENGTH_SHORT).show();
+//                            Log.d("lasjdfhlaksjhfuqwehflasjhdflaks",response.body()+"");
                         }
 
                         @Override

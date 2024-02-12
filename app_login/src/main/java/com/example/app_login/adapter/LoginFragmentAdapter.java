@@ -1,9 +1,5 @@
 package com.example.app_login.adapter;
 
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -22,10 +18,6 @@ public class LoginFragmentAdapter extends FragmentPagerAdapter {
     public LoginFragmentAdapter(@NonNull FragmentManager fm, List<Fragment> list) {
         super(fm);
         this.list = list;
-    }
-
-    public LoginFragmentAdapter(@NonNull FragmentManager fm, int behavior) {
-        super(fm, behavior);
     }
 
     @NonNull

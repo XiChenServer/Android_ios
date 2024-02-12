@@ -3,7 +3,6 @@ apply from: rootProject.file('config.gradle')
 android {
     namespace 'com.example.common'
     compileSdk 33
-
     defaultConfig {
         if (isRunAlone.toBoolean()) {
             applicationId "com.example.common"
@@ -12,10 +11,8 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    resourcePrefix "common_utls"
 
     buildTypes {
         release {

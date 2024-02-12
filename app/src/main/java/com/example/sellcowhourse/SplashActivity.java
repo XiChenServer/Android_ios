@@ -1,15 +1,13 @@
 package com.example.sellcowhourse;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityOptionsCompat;
-
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
@@ -44,12 +42,22 @@ public class SplashActivity extends AppCompatActivity {
             public void onClick(View v) {
                 handler.removeCallbacksAndMessages(null);
                 if (isLogin()) {
-//                        Toast.makeText(SplashActivity.this, "点击", Toast.LENGTH_SHORT).show();
-                    ARouter.getInstance().build("/sellcowhourse/app_MainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
-                    overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
+                    Toast.makeText(SplashActivity.this, "点击", Toast.LENGTH_SHORT).show();
+                    try {
+                        ARouter.getInstance().build("/app_login/AppLoginMainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
+                        overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
+//                        Log.d("ThereIsProblem", "世界你好");
+                    } catch (Exception e) {
+                        Log.d("ThereIsProblem", e.toString());
+                    }
                 } else {
-                    ARouter.getInstance().build("/app_login/AppLoginMainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
-                    overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
+                    try {
+
+                        ARouter.getInstance().build("/sellcowhourse/app_MainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
+                        overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
+                    } catch (Exception e) {
+                        Log.d("ThereIsProblem", e.toString());
+                    }
                 }
             }
         });
@@ -57,7 +65,9 @@ public class SplashActivity extends AppCompatActivity {
 
     boolean isLogin() {
         //通过修改这里，进行调试和测试
-        return MMKV.defaultMMKV().decodeString("token") != null;
+        return MMKV.defaultMMKV().getString("token", null) != null;
+//        Activity
+//        startActivity();
     }
 
     void delAll() {

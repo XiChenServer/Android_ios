@@ -10,6 +10,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class MyRetrofit {
 
-    public static final Retrofit retrofit = new Retrofit.Builder().baseUrl("http://192.168.0.146:13000/").addConverterFactory(GsonConverterFactory.create()).build();
+    public static final Retrofit retrofit = new Retrofit.Builder().baseUrl("http://8.130.86.26:13000/").addConverterFactory(GsonConverterFactory.create()).build();
     public static final ServiceAPI serviceAPI = retrofit.create(ServiceAPI.class);
 }
