@@ -41,20 +41,20 @@ func (BasicServer) SendPhoneCode(c *gin.Context) {
 	}
 
 	code := pkg.GetRandCode()
-	err := pkg.SendPhoneCode(user.PhoneNumber, code)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
-		})
-		return
-	}
-
 	err = dao.RDB.Set(c, user.PhoneNumber, code, 300*time.Second).Err()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
-			"msg":  "服务器内部错误",
+			"msg":  "服务器内部错误,未能存储到redis",
+		})
+		return
+	}
+
+	err := pkg.SendPhoneCode(user.PhoneNumber, code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误，阿里云发送失败",
 		})
 		return
 	}

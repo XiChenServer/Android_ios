@@ -16,3 +16,4 @@ oss:
   AccessKeyId: "LTAI5tQdpsht36XJqYZevPGn"
   AccessKeySecret: "dyThns69pEwBcGl1AjBby1YsGEyDcm"
   Bucket: "xichen-server"
+server: "8.130.86.26"
