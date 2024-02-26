@@ -12,7 +12,7 @@ import (
 const UserClaimsContextKey = "UserClaims"
 
 type UserClaims struct {
-	UserIdentity string `json:"user_identity"`
+	UserIdentity string `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
 	Account      string `json:"account"`
 	PhoneNumber  string `json:"phone_number"`
 	jwt.StandardClaims

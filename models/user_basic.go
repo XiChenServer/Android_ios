@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"log"
 )
@@ -71,20 +72,52 @@ func (UserBasic) SaveUser(user *UserBasic) error {
 	if err != nil {
 		return err
 	}
-	user.Password = u1.Password
-	var userChat = &UserChatBasic{
-		UserIdentity: user.UserIdentity,
-		NickName:     user.NickName,
-		Account:      user.Account,
-		Avatar:       user.Avatar,
-	}
-	if err := db.Where("user_identity = ?", user.UserIdentity).Updates(userChat).Error; err != nil {
-		return err
-	}
+	//user.Password = u1.Password
+	//var userChat = &UserChatBasic{
+	//	UserIdentity: user.UserIdentity,
+	//	NickName:     user.NickName,
+	//	Account:      user.Account,
+	//	Avatar:       user.Avatar,
+	//}
+	//if err := db.Where("user_identity = ?", user.UserIdentity).Updates(userChat).Error; err != nil {
+	//	return err
+	//}
 
 	// 更新用户头像信息
 	if err := db.Model(&UserBasic{}).Where("user_identity = ?", user.UserIdentity).Updates(map[string]interface{}{
 		"avatar": user.Avatar,
+	}).Error; err != nil {
+		return err
+	}
+
+	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
+	if err := db.Updates(user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+func (user UserBasic) SaveUserAvatar(userIdentity, avatar string) error {
+	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
+	db := dao.DB
+	var u1 UserBasic
+	err := dao.DB.Where("user_identity = ?", fmt.Sprintf("%v", userIdentity)).First(&u1).Error
+	if err != nil {
+		return err
+	}
+	//user.Password = u1.Password
+	//var userChat = &UserChatBasic{
+	//	UserIdentity: userIdentity,
+	//	NickName:     user.NickName,
+	//	Account:      user.Account,
+	//	Avatar:       avatar,
+	//}
+	//if err := db.Where("user_identity = ?", fmt.Sprintf("%v", user.UserIdentity)).Updates(userChat).Error; err != nil {
+	//	return err
+	//}
+
+	// 更新用户头像信息
+	if err := db.Model(&UserBasic{}).Where("user_identity = ?", fmt.Sprintf("%v", userIdentity)).Updates(map[string]interface{}{
+		"avatar": avatar,
 	}).Error; err != nil {
 		return err
 	}

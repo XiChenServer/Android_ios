@@ -95,7 +95,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 	user_identity := pkg.GenerateUniqueID()
 	nickname := pkg.GenerateRandomCreativeNickname()
 	err = dao.DB.Create(&models.UserBasic{
-		Avatar:       "http://8.130.86.26/picture/avatar/C5CDECC7DBFB43C21AD1FD025D713A5C.jpg",
+		Avatar:       "http://8.130.86.26:13000/picture/avatar/C5CDECC7DBFB43C21AD1FD025D713A5C.jpg",
 		UserIdentity: user_identity,
 		NickName:     nickname,
 		Account:      account,
@@ -448,7 +448,7 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		return
 	}
 	existsuser.Avatar = fileURL
-	if err = existsuser.SaveUser(existsuser); err != nil {
+	if err = existsuser.SaveUserAvatar(userClaims.UserIdentity, fileURL); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
