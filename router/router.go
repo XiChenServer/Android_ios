@@ -66,7 +66,7 @@ func Router() *gin.Engine {
 
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
-		user.PUT("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
+		user.POST("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
 		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
 		user.POST("/uploads/avatar", servers.BasicOperateUser{}.UserUploadsAvatar)
 		user.DELETE("/delete/address", servers.BasicOperateUser{}.UserDeleteAddress)

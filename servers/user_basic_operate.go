@@ -104,7 +104,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		Email:        "",
 		WechatNumber: "",
 		Address:      nil,
-		Score:        0,
+		Rating:       0,
 	}).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -688,12 +688,11 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 }
 
 type UserModify struct {
-	NickName         string `json:"nickname"`          // 昵称
-	Password         string `json:"password"`          // 密码
-	Email            string `json:"email"`             // 电子邮件
-	WechatNumber     string `json:"wechat_number"`     // 微信号
-	VerificationCode string `json:"verification_code"` // 验证码
-	Name             string `json:"name"`
+	NickName     string `json:"nickname"`      // 昵称
+	Password     string `json:"password"`      // 密码
+	WechatNumber string `json:"wechat_number"` // 微信号
+	Name         string `json:"name"`
+	Email        string `json:"email"`
 }
 
 // UserModifyInfo 是一个Swagger文档化的函数，用于修改用户信息
@@ -705,7 +704,6 @@ type UserModify struct {
 // @Security ApiKeyAuth
 // @Param Authorization header string true "Bearer {token}" default
 // @Param user body UserModify true "需要修改的用户信息"
-// @Param VerificationCode formData string false "验证码" maxlength(6) "验证码"
 // @Success 200 {string} json {"code":200,"msg":"修改信息成功"}
 // @Failure 400 {string} json {"code":400,"msg":"请求无效。服务器无法理解请求"}
 // @Failure 401 {string} json {"code":401,"msg":"未授权"}
@@ -713,7 +711,7 @@ type UserModify struct {
 // @Failure 404 {string} json {"code":404,"msg":"该账号没有被注册"}
 // @Failure 409 {string} json {"code":409,"msg":"请求错误"}
 // @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
-// @Router /user/modify/info [put]
+// @Router /user/modify/info [post]
 func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 	var user UserModify
 	// 使用 ShouldBindJSON 解析 JSON 请求体
@@ -723,6 +721,7 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 			"msg":  "请求无效。服务器无法理解请求",
 		})
 	}
+	fmt.Println(user)
 	// 解析用户信息
 	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
 	if !exists {
@@ -761,25 +760,7 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
 		return
 	}
-	if user.Email != existsuser.Email {
-		code, err := dao.RDB.Get(c, user.Email).Result()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code": 500,
-				"msg":  "验证码没有发送",
-			})
-			return
-		}
-		dao.RDB.Del(c, user.Email)
-		if code != user.VerificationCode {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code": 400,
-				"msg":  "验证码错误",
-			})
-			return
-		}
-		existsuser.Email = user.Email
-	}
+	existsuser.Email = user.Email
 	existsuser.Password = user.Password
 	existsuser.Name = user.Name
 	existsuser.NickName = user.NickName

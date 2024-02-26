@@ -1648,7 +1648,7 @@ const docTemplate = `{
             }
         },
         "/user/modify/info": {
-            "put": {
+            "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -1678,13 +1678,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/servers.UserModify"
                         }
-                    },
-                    {
-                        "maxLength": 6,
-                        "type": "string",
-                        "description": "验证码",
-                        "name": "VerificationCode",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -2328,7 +2321,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "description": "电子邮件",
                     "type": "string"
                 },
                 "name": {
@@ -2340,10 +2332,6 @@ const docTemplate = `{
                 },
                 "password": {
                     "description": "密码",
-                    "type": "string"
-                },
-                "verification_code": {
-                    "description": "验证码",
                     "type": "string"
                 },
                 "wechat_number": {

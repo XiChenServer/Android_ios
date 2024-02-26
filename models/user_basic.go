@@ -51,7 +51,7 @@ type UserBasic struct {
 	Email                string            `gorm:"column:email;type:varchar(24);" json:"email"`
 	WechatNumber         string            `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
 	Address              JSONAddress       `gorm:"column:address;type:json;" json:"address"`
-	Score                float32           `gorm:"column:score;type:decimal(10,2);" json:"score"`
+	Rating               float32           `gorm:"column:score;type:decimal(10,2);" json:"rating"`
 	Name                 string            `gorm:"column:name;type:varchar(24);" json:"name"`
 	UserChatBasic        UserChatBasic     `gorm:"foreignKey:UserIdentity"`
 	Commodity            []*CommodityBasic `gorm:"foreignKey:CommodityIdentity;references:UserIdentity"`
@@ -66,36 +66,15 @@ func (UserBasic) TableName() string {
 
 func (UserBasic) SaveUser(user *UserBasic) error {
 	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
+	fmt.Println(user.Name)
 	db := dao.DB
-	var u1 UserBasic
-	err := dao.DB.Where("user_identity = ?", user.UserIdentity).First(&u1).Error
-	if err != nil {
-		return err
-	}
-	//user.Password = u1.Password
-	//var userChat = &UserChatBasic{
-	//	UserIdentity: user.UserIdentity,
-	//	NickName:     user.NickName,
-	//	Account:      user.Account,
-	//	Avatar:       user.Avatar,
-	//}
-	//if err := db.Where("user_identity = ?", user.UserIdentity).Updates(userChat).Error; err != nil {
-	//	return err
-	//}
-
-	// 更新用户头像信息
-	if err := db.Model(&UserBasic{}).Where("user_identity = ?", user.UserIdentity).Updates(map[string]interface{}{
-		"avatar": user.Avatar,
-	}).Error; err != nil {
-		return err
-	}
-
 	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
-	if err := db.Updates(user).Error; err != nil {
+	if err := db.Where("user_identity = ?", user.UserIdentity).Updates(user).Error; err != nil {
 		return err
 	}
 	return nil
 }
+
 func (user UserBasic) SaveUserAvatar(userIdentity, avatar string) error {
 	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
 	db := dao.DB

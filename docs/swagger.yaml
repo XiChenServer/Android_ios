@@ -75,7 +75,6 @@ definitions:
   servers.UserModify:
     properties:
       email:
-        description: 电子邮件
         type: string
       name:
         type: string
@@ -84,9 +83,6 @@ definitions:
         type: string
       password:
         description: 密码
-        type: string
-      verification_code:
-        description: 验证码
         type: string
       wechat_number:
         description: 微信号
@@ -1186,7 +1182,7 @@ paths:
       tags:
       - 用户私有方法
   /user/modify/info:
-    put:
+    post:
       consumes:
       - application/json
       description: 根据提供的JSON请求体修改用户信息
@@ -1202,11 +1198,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/servers.UserModify'
-      - description: 验证码
-        in: formData
-        maxLength: 6
-        name: VerificationCode
-        type: string
       produces:
       - application/json
       responses:
