@@ -81,9 +81,6 @@ definitions:
       nickname:
         description: 昵称
         type: string
-      password:
-        description: 密码
-        type: string
       wechat_number:
         description: 微信号
         type: string
@@ -1249,6 +1246,11 @@ paths:
       - description: 商品ID
         in: query
         name: productID
+        required: true
+        type: string
+      - description: 需要购买的商品数量
+        in: query
+        name: productNum
         required: true
         type: string
       produces:

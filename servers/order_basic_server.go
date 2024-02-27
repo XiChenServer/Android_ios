@@ -16,9 +16,9 @@ type OrderBasicServer struct {
 }
 
 var (
-	mu      sync.Mutex
-	product models.CommodityBasic
-	err     error
+	mu sync.Mutex
+	//product models.CommodityBasic
+	err error
 )
 
 // UserCreateOrder 创建订单接口
@@ -29,6 +29,7 @@ var (
 // @Param Authorization header string true "Bearer {token}"
 // @Param sellerIdentity query string true "卖家身份"
 // @Param productID query string true "商品ID"
+// @Param productNum query string true "需要购买的商品数量"
 // @Success 200 {string} json {"code":200,"msg":"订单创建完成"}
 // @Failure 400 {string} json {"code":400,"msg":"卖家未拥有该商品"}
 // @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
@@ -69,8 +70,16 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		return
 	}
 
+	productNum, err := strconv.Atoi(c.Query("productNum"))
+	if err != nil {
+		log.Println("Error parsing productID:", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "无效的购买数量",
+		})
+		return
+	}
 	productID, err := strconv.Atoi(c.Query("productID"))
-	fmt.Println(productID)
 	if err != nil {
 		log.Println("Error parsing productID:", err)
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -79,38 +88,47 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		})
 		return
 	}
-	// 查询购买者的所有订单信息
-	var buyerOrders []models.Order
-	if err := dao.DB.Where("buyer_identity = ?", userClaims.UserIdentity).Find(&buyerOrders).Error; err != nil {
-		log.Println("Error querying buyer's orders:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
-		})
-		return
-	}
+	//// 查询购买者的所有订单信息
+	//var buyerOrders []models.Order
+	//if err := dao.DB.Where("buyer_identity = ?", userClaims.UserIdentity).Find(&buyerOrders).Error; err != nil {
+	//	log.Println("Error querying buyer's orders:", err)
+	//	c.JSON(http.StatusInternalServerError, gin.H{
+	//		"code": 500,
+	//		"msg":  "服务器内部错误",
+	//	})
+	//	return
+	//}
 
-	// 遍历订单，检查是否存在相同的产品ID
-	for _, existingOrder := range buyerOrders {
-		if existingOrder.ProductIdentity == uint(productID) {
-			log.Println("Order already exists for the product.")
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code": 400,
-				"msg":  "订单已存在",
-			})
-			return
-		}
-	}
-	var product models.CommodityBasic
-	if err := dao.DB.Where("id = ?", productID).Find(&product).Error; err != nil {
+	//// 遍历订单，检查是否存在相同的产品ID
+	//for _, existingOrder := range buyerOrders {
+	//	if existingOrder.ProductIdentity == uint(productID) {
+	//		log.Println("Order already exists for the product.")
+	//		c.JSON(http.StatusBadRequest, gin.H{
+	//			"code": 400,
+	//			"msg":  "订单已存在",
+	//		})
+	//		return
+	//	}
+	//}
+	var product1 models.CommodityBasic
+
+	if err := dao.DB.Where("id = ?", productID).Find(&product1).Error; err != nil {
 		log.Println("Error querying product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
+			"code": 400,
 			"msg":  "服务器内部错误",
 		})
 		return
 	}
-	if product.CommodityIdentity != seller.UserIdentity {
+	if product1.Number < productNum {
+		log.Println("Product does not belong to the seller.")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "商品已经售完",
+		})
+		return
+	}
+	if product1.CommodityIdentity != seller.UserIdentity {
 		log.Println("Product does not belong to the seller.")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -118,34 +136,41 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		})
 		return
 	}
-	if product.SoldStatus == 1 {
+
+	if product1.Number-productNum == 0 {
+		product1.SoldStatus = 4
+	}
+	product1.Number -= productNum
+	var lock sync.Mutex
+	lock.Lock()
+	err = dao.DB.Updates(&product1).Error
+	if err != nil {
+		log.Println("Error updating product:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	lock.Unlock()
+	if product1.SoldStatus == 1 {
 		var order = &models.Order{
 			OrderIdentity:   pkg.GenerateUniqueID(),
 			BuyerIdentity:   userClaims.UserIdentity,
 			SellerIdentity:  sellerIdentity,
 			ProductIdentity: uint(productID),
-			Name:            product.Title,
-			Price:           product.Price,
-			Quantity:        product.Number,
-			Msg:             product.Information,
+			Name:            product1.Title,
+			Price:           product1.Price,
+			Quantity:        product1.Number,
+			Msg:             product1.Information,
 			Buyer:           buyer,
 			Seller:          seller,
-			Product:         product,
+			Product:         product1,
 		}
 
 		err = models.Order{}.CreateOrder(order)
 		if err != nil {
 			log.Println("Error creating order:", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code": 500,
-				"msg":  "服务器内部错误",
-			})
-			return
-		}
-		product.SoldStatus = 4
-		err = dao.DB.Updates(&product).Error
-		if err != nil {
-			log.Println("Error updating product:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code": 500,
 				"msg":  "服务器内部错误",

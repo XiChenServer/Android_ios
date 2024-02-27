@@ -181,13 +181,13 @@ func (CommodityServer) UserAddsProducts(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		objectKey := "picture/commodity" + file.Filename
+		objectKey := "picture/commodity/" + file.Filename
 		err = pkg.UploadAllFile(objectKey, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fileURL := fmt.Sprintf("http://%s", objectKey)
+		fileURL := fmt.Sprintf("http://8.130.86.26:13000/%s", objectKey)
 		fmt.Println(fileURL)
 		media := models.MediaBasic{Image: fileURL}
 		product.Media = append(product.Media, media)

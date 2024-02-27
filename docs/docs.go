@@ -1757,6 +1757,13 @@ const docTemplate = `{
                         "name": "productID",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "需要购买的商品数量",
+                        "name": "productNum",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2328,10 +2335,6 @@ const docTemplate = `{
                 },
                 "nickname": {
                     "description": "昵称",
-                    "type": "string"
-                },
-                "password": {
-                    "description": "密码",
                     "type": "string"
                 },
                 "wechat_number": {

@@ -689,7 +689,6 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 
 type UserModify struct {
 	NickName     string `json:"nickname"`      // 昵称
-	Password     string `json:"password"`      // 密码
 	WechatNumber string `json:"wechat_number"` // 微信号
 	Name         string `json:"name"`
 	Email        string `json:"email"`
@@ -756,16 +755,14 @@ func (BasicOperateUser) UserModifyInfo(c *gin.Context) {
 		})
 		return
 	}
-	if user.Password == "" || user.NickName == "" {
+	if user.NickName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
 		return
 	}
 	existsuser.Email = user.Email
-	existsuser.Password = user.Password
 	existsuser.Name = user.Name
 	existsuser.NickName = user.NickName
 	existsuser.WechatNumber = user.WechatNumber
-	existsuser.Email = user.Email
 	if err = existsuser.SaveUser(existsuser); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
