@@ -1,89 +1,64 @@
 package main
 
 import (
-	"bufio"
+	"context"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/qiniu/go-sdk/v7/auth/qbox"
+	"github.com/qiniu/go-sdk/v7/storage"
+	"mime/multipart"
 	"os"
-	"os/signal"
-	"strings"
+)
+
+const (
+	AccessKey = "y_XTiaH5dywx_R-J-twejWCQRXvBd5jI54YT9ihT"
+	SerectKey = "2g0S7zGWZ_zca0BVwYTeugUoZJepYLsYjd5bKGir"
+	Bucket    = "taoniuma"
+	ImgUrl    = "http://s9isqyrv9.hn-bkt.clouddn.com/"
 )
 
 func main() {
-	// 创建 Kafka 生产者
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
-	})
+
+	localFile := "/home/zwm/GolandProjects/Android_ios/uploads/截图 2023-11-22 21-45-21.png"
+	// 初始化一个进度记录对象
+	// 打开本地文件
+	file, err := os.Open(localFile)
 	if err != nil {
-		fmt.Printf("Failed to create producer: %s\n", err)
+		fmt.Println("打开文件失败:", err)
 		return
 	}
-	defer producer.Close()
-
-	// 创建 Kafka 消费者
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
-		"group.id":          "my-group",
-		"auto.offset.reset": "earliest",
-	})
+	defer file.Close()
+	// 获取文件信息
+	fileInfo, err := file.Stat()
 	if err != nil {
-		fmt.Printf("Failed to create consumer: %s\n", err)
+		fmt.Println("获取文件信息失败:", err)
 		return
 	}
-	defer consumer.Close()
+	fileSize := fileInfo.Size()
 
-	// 订阅主题
-	topic := "123"
-	err = consumer.SubscribeTopics([]string{topic}, nil)
+	UploadToQiNiu(file, fileSize)
+}
+
+// 封装上传图片到七牛云然后返回状态和图片的url
+func UploadToQiNiu(file multipart.File, fileSize int64) (int, string) {
+	putPlicy := storage.PutPolicy{
+		Scope: Bucket,
+	}
+	mac := qbox.NewMac(AccessKey, SerectKey)
+	upToken := putPlicy.UploadToken(mac)
+	cfg := storage.Config{
+		Zone:          &storage.ZoneHuanan,
+		UseCdnDomains: false,
+		UseHTTPS:      false,
+	}
+	putExtra := storage.PutExtra{}
+	formUploader := storage.NewFormUploader(&cfg)
+	ret := storage.PutRet{}
+	err := formUploader.PutWithoutKey(context.Background(), &ret, upToken, file, fileSize, &putExtra)
 	if err != nil {
-		fmt.Printf("Failed to subscribe to topic: %s\n", err)
-		return
+
+		return 0, err.Error()
 	}
-
-	// 用于处理中断信号的通道
-	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, os.Interrupt)
-	defer close(sigchan)
-
-	// 创建输入读取器
-	reader := bufio.NewReader(os.Stdin)
-
-	// 启动循环
-	for {
-		select {
-		case sig := <-sigchan:
-			// 处理中断信号，停止循环
-			fmt.Printf("Caught signal %v: stopping\n", sig)
-			return
-
-		default:
-			// 从输入读取消息，发送到 Kafka
-			fmt.Print("Enter message to produce (or 'exit' to stop): ")
-			input, _ := reader.ReadString('\n')
-			input = strings.TrimSpace(input)
-
-			if input == "exit" {
-				// 输入 exit 时退出循环
-				fmt.Println("Exiting...")
-				return
-			}
-
-			// 发送消息到 Kafka
-			err := producer.Produce(&kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-				Value:          []byte(input),
-			}, nil)
-			if err != nil {
-				fmt.Printf("Failed to produce message: %s\n", err)
-			}
-		}
-
-		// 从 Kafka 接收并打印消息
-		msg, err := consumer.ReadMessage(-1)
-		if err == nil {
-			fmt.Printf("Received message: %s\n", string(msg.Value))
-		} else {
-			fmt.Printf("Error reading message: %v\n", err)
-		}
-	}
+	url := ImgUrl + ret.Key
+	fmt.Println(url)
+	return 200, url
 }

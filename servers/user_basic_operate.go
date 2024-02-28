@@ -410,27 +410,19 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件大小超出限制"})
 		return
 	}
-
-	// 保存文件到本地
-	localFilePath := "./picture/avatar/" + file.Filename
-	fmt.Println("sdf", localFilePath)
-	err = c.SaveUploadedFile(file, localFilePath)
+	fileName, err := file.Open()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		fmt.Println("无法打开文件:", err)
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件有问题"})
 		return
 	}
-	// 构建上传路径，直接使用文件名，确保包含目录信息
-	objectKey := "picture/avatar/" + file.Filename
-	// 上传本地文件到服务器
-	//	objectKey := "/picture/avatar/" + file.Filename
-	err = pkg.UploadAllFile(objectKey, file)
+	defer fileName.Close()
+	url, err := pkg.UploadToQiNiu(fileName, file.Size)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		fmt.Println("无法打开文件:", err)
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件上传有问题"})
 		return
 	}
-	fileURL := fmt.Sprintf("http://8.130.86.26:13000/%s", objectKey)
-	// 检查账号是否已经注册
-	fmt.Println("URL", fileURL)
 	exists, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -447,8 +439,8 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 		})
 		return
 	}
-	existsuser.Avatar = fileURL
-	if err = existsuser.SaveUserAvatar(userClaims.UserIdentity, fileURL); err != nil {
+	existsuser.Avatar = url
+	if err = existsuser.SaveUserAvatar(userClaims.UserIdentity, url); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",

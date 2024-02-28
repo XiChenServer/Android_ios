@@ -173,22 +173,18 @@ func (CommodityServer) UserAddsProducts(c *gin.Context) {
 	// ...
 
 	for _, file := range files {
-		// 保存文件到本地
-		localFilePath := "./picture/commodity/" + file.Filename
-		fmt.Println("sdf", localFilePath)
-		err = c.SaveUploadedFile(file, localFilePath)
+		fileName, err := file.Open()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		objectKey := "picture/commodity/" + file.Filename
-		err = pkg.UploadAllFile(objectKey, file)
+		fileSize := file.Size
+
+		fileURL, err := pkg.UploadToQiNiu(fileName, fileSize)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fileURL := fmt.Sprintf("http://8.130.86.26:13000/%s", objectKey)
-		fmt.Println(fileURL)
 		media := models.MediaBasic{Image: fileURL}
 		product.Media = append(product.Media, media)
 	}
