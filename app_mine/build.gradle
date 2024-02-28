@@ -26,9 +26,11 @@ android {
 
 dependencies {
     implementation(project(":core_net_work"))
+
     implementation(project(":common_utls"))
     //Glide
     implementation 'com.github.bumptech.glide:glide:4.16.0'
+    implementation project(path: ':app_login')
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
     //底部上划
 //    implementation 'com.github.User:Repo:Tag'

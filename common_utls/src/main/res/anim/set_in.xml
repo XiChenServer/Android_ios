@@ -5,8 +5,8 @@
     tools:ignore="ResourceName">
     <scale
         android:duration="300"
-        android:fromXScale="2.5"
-        android:fromYScale="2.5"
+        android:fromXScale="1.5"
+        android:fromYScale="1.5"
         android:pivotX="50%p"
         android:pivotY="50%p"
         android:toXScale="1.0"

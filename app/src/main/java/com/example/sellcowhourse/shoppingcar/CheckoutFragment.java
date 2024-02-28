@@ -1,4 +1,4 @@
-package com.example.mine_pager.fragment;
+package com.example.sellcowhourse.shoppingcar;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,10 +11,11 @@ import androidx.fragment.app.Fragment;
 
 /**
  * @Author winiymissl
- * @Date 2024-02-12 18:48
+ * @Date 2024-02-23 16:27
  * @Version 1.0
  */
-public class SearchFragment extends Fragment {
+public class CheckoutFragment extends Fragment {
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

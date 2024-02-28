@@ -92,14 +92,21 @@ public class RegisterFragment extends Fragment {
                                 binding.progressRegisterBar.setVisibility(View.GONE);
                                 binding.register.setVisibility(View.VISIBLE);
                                 if (response.isSuccessful()) {
-                                    Log.d("IsThereProblem", response.body().getMsg());
+//                                    Log.d("IsThereProblem", response.body().getMsg());
                                     Toast.makeText(getActivity(), "注册成功:", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(getActivity(), "出问题了呢", Toast.LENGTH_SHORT).show();
                                     binding.etPhone.setText("");
                                     binding.etCode.setText("");
                                     binding.etPsswrdToo.setText("");
                                     binding.etPsswrd.setText("");
+                                    binding.progressRegisterBar.setVisibility(View.GONE);
+                                    Toast.makeText(getActivity(), "请登陆", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Log.d("IsThereProblem", response.body().getMsg());
+                                    Toast.makeText(getActivity(), "出问题了呢", Toast.LENGTH_SHORT).show();
+//                                    binding.etPhone.setText("");
+//                                    binding.etCode.setText("");
+//                                    binding.etPsswrdToo.setText("");
+//                                    binding.etPsswrd.setText("");
                                     binding.progressRegisterBar.setVisibility(View.GONE);
                                 }
                             }
@@ -151,7 +158,7 @@ public class RegisterFragment extends Fragment {
                                         binding.btnCode.setText("验证码");
                                     }
                                 }.start();
-                                Toast.makeText(getActivity(), "msg : " + String.valueOf(response.body().getMsg()), Toast.LENGTH_SHORT).show();
+//                                Toast.makeText(getActivity(), "msg : " + String.valueOf(response.body().getMsg()), Toast.LENGTH_SHORT).show();
                             }
 
                             @Override

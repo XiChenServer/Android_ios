@@ -87,10 +87,10 @@ public class SignInCodeFragment extends Fragment {
                             }.start();
                             binding.btnCodeCode.setVisibility(View.VISIBLE);
                             binding.progressBarCode.setVisibility(View.GONE);
-//                            if (response.body().isSucceed()) {
+                            if (response.body().isSucceed()) {
                                 Toast.makeText(getActivity(), "发送成功", Toast.LENGTH_SHORT).show();
-//                            }
-//                            Toast.makeText(getActivity(), response.body().getMsg(), Toast.LENGTH_SHORT).show();
+                            }
+                            Toast.makeText(getActivity(), response.body().getMsg(), Toast.LENGTH_SHORT).show();
 //                            Log.d("lasjdfhlaksjhfuqwehflasjhdflaks",response.body()+"");
                         }
 
@@ -126,9 +126,17 @@ public class SignInCodeFragment extends Fragment {
                             binding.btnLoginCode.setVisibility(View.VISIBLE);
                             if (response.isSuccessful()) {
                                 //本地存储token
-                                MMKV mmkv = MMKV.defaultMMKV();
-                                mmkv.encode("token", response.body().getData().getToken());
-                                Toast.makeText(getActivity(), "登录成功", Toast.LENGTH_SHORT).show();
+                                try {
+                                    MMKV mmkv = MMKV.defaultMMKV();
+                                    mmkv.encode("token", response.body().getData().getToken());
+
+                                    Toast.makeText(getActivity(), "登录成功", Toast.LENGTH_SHORT).show();
+
+                                } catch (RuntimeException e) {
+
+                                    Log.d("asdfasdgasdgasdgasdgasdg", e.toString());
+                                }
+                                //得到用户的信息存储在数据库里面
                                 ARouter.getInstance().build("/sellcowhourse/app_MainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
                                 getActivity().overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
                             }

@@ -35,13 +35,13 @@ public class SplashActivity extends AppCompatActivity {
                     overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
                 }
             }
-        }, 3000);
+        }, 2500);
 
         chip.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 handler.removeCallbacksAndMessages(null);
-                if (isLogin()) {
+                if (!isLogin()) {
                     Toast.makeText(SplashActivity.this, "点击", Toast.LENGTH_SHORT).show();
                     try {
                         ARouter.getInstance().build("/app_login/AppLoginMainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
@@ -52,7 +52,6 @@ public class SplashActivity extends AppCompatActivity {
                     }
                 } else {
                     try {
-
                         ARouter.getInstance().build("/sellcowhourse/app_MainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
                         overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
                     } catch (Exception e) {

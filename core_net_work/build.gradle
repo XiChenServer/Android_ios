@@ -28,7 +28,10 @@ android {
 
 }
 dependencies {
+    implementation(project(":common_utls"))
     // Retrofit网络请求库
+
+
     implementation(platform("com.squareup.okhttp3:okhttp-bom:4.11.0"))
     //由于Retrofit是依赖于okhttp3，使用需要导入okhttp3的依赖包、
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")

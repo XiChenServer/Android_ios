@@ -17,9 +17,10 @@ public class MineListViewAdapterImpl {
     int more;
     static int[] image = new int[]{R.drawable.server,
             R.drawable.collect,
-            R.drawable.buy,
+
             R.drawable.settings,};
-    static String[] text = new String[]{"服务", "收藏", "购买", "设置",};
+//    static String[] text = new String[]{"商品", "收藏", "设置",};
+    static String[] text = new String[]{"商品", "设置",};
 
     public int getImageOne() {
         return imageOne;

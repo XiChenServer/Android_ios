@@ -48,7 +48,6 @@ public class MineListViewAdapter extends BaseAdapter {
             view = convertView;
         }
         list = MineListViewAdapterImpl.getList();
-
         ImageView imageView_1 = view.findViewById(R.id.imageView_listview_1);
         ImageView imageView_2 = view.findViewById(R.id.imageView_listview_2);
         TextView textView = view.findViewById(R.id.textView_listview);

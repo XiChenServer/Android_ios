@@ -8,7 +8,7 @@ import com.example.core_net_work.model.BaseResult;
  * @Version 1.0
  */
 public class RegisterResult extends BaseResult {
-    RegisterDataResult data;
+ public RegisterDataResult data;
 
     public RegisterDataResult getData() {
         return data;

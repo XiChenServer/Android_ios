@@ -2,16 +2,15 @@ package com.example.app_login;
 
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.example.app_login.databinding.FragmentSignInPasswrdBinding;
@@ -19,8 +18,6 @@ import com.example.core_net_work.MyRetrofit;
 import com.example.core_net_work.model.login.LoginRequest;
 import com.example.core_net_work.model.login.LoginResult;
 import com.tencent.mmkv.MMKV;
-
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -71,6 +68,7 @@ public class SignInPsswrdFragment extends Fragment {
                                 MMKV mmkv = MMKV.defaultMMKV();
                                 Log.d("ThereIsProblem", response.body().getData().getToken());
                                 mmkv.encode("token", response.body().getData().getToken());
+                                Log.d("asdfgasdgasfdgasdfg", response.body().getData().getToken().toString());
                                 Toast.makeText(getActivity(), "登录成功", Toast.LENGTH_SHORT).show();
                                 ARouter.getInstance().build("/sellcowhourse/app_MainActivity").withFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).navigation();
                                 getActivity().overridePendingTransition(com.example.common.R.anim.set_in, com.example.common.R.anim.set_out);
