@@ -3,6 +3,7 @@ package com.example.core_net_work;
 import com.example.core_net_work.model.goods.BoughtResult;
 import com.example.core_net_work.model.goods.ProductCollectCancelResult;
 import com.example.core_net_work.model.goods.ProductCollectResult;
+import com.example.core_net_work.model.goods.ProductInfoResult;
 import com.example.core_net_work.model.goods.ProductLikeCancelResul;
 import com.example.core_net_work.model.goods.ProductLikeResult;
 import com.example.core_net_work.model.goods.ProductSimpleInfoResult;
@@ -116,5 +117,7 @@ public interface ServiceAPI {
     @POST("/user/order/find/AllBuyOrder")
     Call<BoughtResult> getBoughtInfo(@Header("Authorization") String token);
 
+    @POST("/get/one_product_info")
+    Call<ProductInfoResult> getProductInfo(@Query("id") String id);
 }
 

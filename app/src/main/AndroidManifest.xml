@@ -25,7 +25,11 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
@@ -40,6 +44,7 @@
         android:theme="@style/Theme.SellCowHourse"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote"> </service>
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -54,6 +59,9 @@
             android:windowSoftInputMode="adjustPan"
             android:exported="true">
         </activity>
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="UL2KeA8K5OWqP3d9zbkK0ch54bel6xL2" >
+        </meta-data>
     </application>
-
 </manifest>

@@ -54,12 +54,15 @@ dependencies {
     implementation 'io.github.lucksiege:pictureselector:v3.11.2'
     //eventbus
     implementation("org.greenrobot:eventbus:3.3.1")
-    //uCrop
-//    implementation 'com.github.yalantis:ucrop:2.2.8'
     // uCrop library (Not necessary)
     implementation 'io.github.lucksiege:ucrop:v3.11.2'
     //recyclerView
     implementation 'com.jude:easyrecyclerview:4.4.2'
+    //sdk百度
+//    implementation 'com.baidu.lbsyun:BaiduMapSDK_Location:9.1.8'
+//    implementation 'com.baidu.lbsyun:BaiduMapSDK_Location:9.3.7'
+    //Banner
+    implementation 'io.github.youth5201314:banner:2.2.3'
 }
 
 android {
@@ -67,7 +70,13 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+
     defaultConfig {
+        ndk {
+            // 设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments = [AROUTER_MODULE_NAME: project.getName()]
@@ -96,4 +105,6 @@ android {
         enable = true
     }
 }
+
+
 

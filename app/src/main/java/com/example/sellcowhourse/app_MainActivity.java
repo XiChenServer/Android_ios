@@ -27,11 +27,20 @@ import java.util.List;
 @Route(path = "/sellcowhourse/app_MainActivity")
 public class app_MainActivity extends AppCompatActivity {
     ActivityAppMainBinding binding;
+    private static final int RC_CAMERA_PERMISSION = 123;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         binding = ActivityAppMainBinding.inflate(getLayoutInflater());
         super.onCreate(savedInstanceState);
         setContentView(binding.getRoot());
+
+//        if (!EasyPermissions.hasPermissions(this, perms)) {
+//            EasyPermissions.requestPermissions(this, "需要相机权限来拍摄照片", RC_CAMERA_PERMISSION, perms);
+//        } else {
+        // 已经有相机权限
+        // 在这里执行您的逻辑
+//        }
 //        查看Drawable的所有子类
         List list = new ArrayList();
         list.add(new BlankFragment());

@@ -22,7 +22,7 @@ import com.example.common.room.entitues.converter.UserAddressConverter;
  * @Date 2024-02-19 16:18
  * @Version 1.0
  */
-@Database(entities = {User.class, ProductSimple.class, Product.class, ShoppingCarOrder.class}, version = 16, exportSchema = false)
+@Database(entities = {User.class, ProductSimple.class, Product.class, ShoppingCarOrder.class}, version = 19, exportSchema = false)
 @TypeConverters({UserAddressConverter.class})
 
 public abstract class AppDatabase extends RoomDatabase {

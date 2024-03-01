@@ -140,7 +140,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter {
         ProductSimple goods = list.get(position);
         myViewHolder.ratingBar.setRating(Float.valueOf(goods.getRating()));
         myViewHolder.textView_title.setText(goods.getTitle());
-        myViewHolder.textView_subTitle.setText(goods.getSubTitle());
+        myViewHolder.textView_subTitle.setText(goods.information);
 //        myViewHolder.imageView.setImageResource(R.drawable.apple);
         Glide.with(context).load(goods.getImage()).placeholder(com.example.common.R.drawable.loading).error(com.example.common.R.drawable.avatatloadfail).into(myViewHolder.imageView_cardView);
 //        Glide.with(context).load(goods.getImage()).placeholder(com.example.common.R.drawable.loading).error(com.example.common.R.drawable.avatatloadfail).into(new SimpleTarget<Drawable>() {

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.common.room.AppDatabase;
 import com.example.common.room.dao.ShoppingCarDao;
@@ -27,11 +27,10 @@ import com.example.common.room.entitues.ShoppingCarOrder;
 import com.example.sellcowhourse.R;
 import com.example.sellcowhourse.databinding.FragmentShoppingCarBinding;
 import com.example.sellcowhourse.shoppingcar.adapter.ShoppingCarOrderAdapter;
-import com.github.jdsjlzx.interfaces.OnRefreshListener;
-import com.github.jdsjlzx.recyclerview.LRecyclerViewAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @Author winiymissl
@@ -42,29 +41,17 @@ public class ShoppingCarFragment extends Fragment {
     FragmentShoppingCarBinding binding;
     private int screenWidth = 720;
     private int screenHeight = 1280;
-    int count = 0;
-    private int pageSize = 10;
-
+    List<ShoppingCarOrder> list = new ArrayList<>();
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_shopping_car, container, false);
         binding = FragmentShoppingCarBinding.bind(view);
-        List<ShoppingCarOrder> list1 = new ArrayList<ShoppingCarOrder>();
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-        list1.add(new ShoppingCarOrder("", 444.5f, 3, "shit"));
-
-        ShoppingCarOrderAdapter shoppingCarOrderAdapter = new ShoppingCarOrderAdapter(list1, getActivity());
-        LRecyclerViewAdapter lRecyclerViewAdapter = new LRecyclerViewAdapter(shoppingCarOrderAdapter);
+        ShoppingCarOrderAdapter adapter = new ShoppingCarOrderAdapter(list, getActivity());
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 1);
         binding.LrecyclerViewShoppingCar.setLayoutManager(gridLayoutManager);
-        binding.LrecyclerViewShoppingCar.setAdapter(lRecyclerViewAdapter);
+        binding.LrecyclerViewShoppingCar.setAdapter(adapter);
         HandlerThread handlerThread = new HandlerThread("Refresh");
         handlerThread.start();
         Handler handler = new Handler(handlerThread.getLooper());
@@ -72,19 +59,23 @@ public class ShoppingCarFragment extends Fragment {
             @Override
             public void run() {
                 ShoppingCarDao shoppingCarDao = AppDatabase.getInstance(getActivity()).shoppingCarDao();
-                List<ShoppingCarOrder> temp = shoppingCarDao.getAllInfo();
-                list1.addAll(temp);
+                shoppingCarDao.getAllInfo().forEach(new Consumer<ShoppingCarOrder>() {
+                    @Override
+                    public void accept(ShoppingCarOrder shoppingCarOrder) {
+                        list.add(shoppingCarOrder);
+                    }
+                });
+
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        lRecyclerViewAdapter.notifyDataSetChanged();
-                        binding.LrecyclerViewShoppingCar.refreshComplete(pageSize);
+                        adapter.notifyDataSetChanged();
                     }
                 });
             }
         });
 
-        binding.LrecyclerViewShoppingCar.setOnRefreshListener(new OnRefreshListener() {
+        binding.swipeRefreshLayoutShoppingCar.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 synchronized (new Object()) {
@@ -94,23 +85,17 @@ public class ShoppingCarFragment extends Fragment {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                ShoppingCarDao shoppingCarDao = AppDatabase.getInstance(getActivity()).shoppingCarDao();
-                                List<ShoppingCarOrder> list = shoppingCarDao.getAllInfo();
-                                list1.addAll(list);
-                                Log.d("MeiWenTi", list1.toString());
-                                getActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        lRecyclerViewAdapter.notifyDataSetChanged();
-                                        binding.LrecyclerViewShoppingCar.refreshComplete(pageSize);
-                                    }
-                                });
-
-
-                            } catch (Exception e) {
-                                Log.d("有问题", e.toString());
-                            }
+                            list.clear();
+                            ShoppingCarDao shoppingCarDao = AppDatabase.getInstance(getActivity()).shoppingCarDao();
+                            List<ShoppingCarOrder> temp = shoppingCarDao.getAllInfo();
+                            list.addAll(temp);
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    adapter.notifyDataSetChanged();
+                                    binding.swipeRefreshLayoutShoppingCar.setRefreshing(false);
+                                }
+                            });
                         }
                     });
                 }
@@ -123,7 +108,6 @@ public class ShoppingCarFragment extends Fragment {
                 anim.setDuration(100); // 设置动画持续时间
                 anim.setRepeatMode(Animation.REVERSE); // 设置动画重复模式
                 anim.setRepeatCount(1); // 设置动画重复次数
-
                 // 应用动画到 FloatingActionButton
                 binding.floatingButton.startAnimation(anim);
                 //结算，生成订单

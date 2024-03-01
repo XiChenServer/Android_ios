@@ -32,10 +32,9 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <!-- Navigation bar color. 导航栏-->
-        <item name="android:windowTranslucentNavigation">true</item>
+<!--        <item name="android:windowTranslucentNavigation">true</item>-->
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@style/ActivityAnimation</item>
-        <item name="actionSheetStyle">@style/ActionSheetStyleiOS7</item>
     </style>
 
     <style name="ActivityAnimation">

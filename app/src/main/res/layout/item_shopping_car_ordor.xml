@@ -25,7 +25,7 @@
 
     <TextView
         android:id="@+id/textView_name"
-        android:layout_width="76dp"
+        android:layout_width="wrap_content"
         android:layout_height="24dp"
         android:layout_marginStart="12dp"
         android:layout_marginTop="24dp"
@@ -50,27 +50,35 @@
         android:id="@+id/imageButton_close"
         android:layout_width="25dp"
         android:layout_height="25dp"
+        android:background="@android:color/transparent"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_baseline_close_24" />
 
-    <com.google.android.material.chip.Chip
+    <ImageButton
         android:id="@+id/chip_reduce"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="68dp"
-        android:layout_marginEnd="40dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="76dp"
+        android:layout_marginEnd="48dp"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/minus"
         app:layout_constraintEnd_toStartOf="@+id/chip_add"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.chip.Chip
+    <ImageButton
         android:id="@+id/chip_add"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="68dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+
+        android:layout_marginTop="76dp"
         android:layout_marginEnd="16dp"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/add_count"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

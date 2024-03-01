@@ -21,8 +21,6 @@ import java.util.List;
  * @Version 1.0
  */
 public class AddPicAdapter extends RecyclerView.Adapter {
-    public static final int VIEW_TYPE_ADD = 1;
-    public static final int VIEW_TYPE_IMAGE = 2;
 
     List<PicRecyclerViewEntity> list;
     Context context;
@@ -55,7 +53,7 @@ public class AddPicAdapter extends RecyclerView.Adapter {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (list.size() == 0 || position == list.size()) {
             MyViewHolderImage viewHolder = (MyViewHolderImage) holder;
-            Glide.with(context).load(com.example.common.R.drawable.add).placeholder(com.example.common.R.drawable.loading).error(com.example.common.R.drawable.avatatloadfail).into(viewHolder.imageView);
+            Glide.with(context).load(com.example.common.R.drawable.add_count).placeholder(com.example.common.R.drawable.loading).error(com.example.common.R.drawable.avatatloadfail).into(viewHolder.imageView);
         } else {
             MyViewHolderImage viewHolder = (MyViewHolderImage) holder;
             PicRecyclerViewEntity entity = list.get(position);

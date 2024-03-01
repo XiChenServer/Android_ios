@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.example.common.room.GlideEngine;
 import com.example.common.room.utils.UtilsWay;
 import com.example.core_net_work.MyRetrofit;
+import com.example.core_net_work.model.goods.ProductSimpleInfoResult;
 import com.example.mine.R;
 import com.example.mine.databinding.FragmentAddProductBinding;
 import com.example.mine.fragment.listviewfragment.adapter.AddPicAdapter;
@@ -25,7 +26,6 @@ import com.example.mine.fragment.listviewfragment.entity.PicRecyclerViewEntity;
 import com.example.mine.fragment.listviewfragment.eventbus.SendMessageEvent;
 import com.github.jdsjlzx.interfaces.OnItemClickListener;
 import com.github.jdsjlzx.recyclerview.LRecyclerViewAdapter;
-import com.google.android.material.snackbar.Snackbar;
 import com.luck.picture.lib.basic.PictureSelector;
 import com.luck.picture.lib.config.SelectMimeType;
 import com.luck.picture.lib.entity.LocalMedia;
@@ -36,7 +36,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +52,7 @@ import retrofit2.Response;
  * @Version 1.0
  */
 public class AddProductFragment extends Fragment {
-
+    Call<ProductSimpleInfoResult> call = null;
 
     @Override
     public void onStart() {
@@ -97,13 +96,12 @@ public class AddProductFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (binding.chipIsAuction.isChecked()) {
-                    // 如果 Chip 被选中，则执行此处的逻辑
                     Toast.makeText(getActivity(), "Chip Checked", Toast.LENGTH_SHORT).show();
                 } else {
-                    //如果 Chip 被取消选中，则执行此处的逻辑
                     Toast.makeText(getActivity(), "Chip Unchecked", Toast.LENGTH_SHORT).show();
                 }
             }
+
         });
         binding.chipClose.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,37 +132,32 @@ public class AddProductFragment extends Fragment {
                 RequestBody requestFile_number = RequestBody.create(MediaType.parse("multipart/form-data"), binding.editTextNumberPrice.getText().toString());
                 RequestBody requestFile_information = RequestBody.create(MediaType.parse("multipart/form-data"), binding.textInputEditTextInfo.getText().toString());
                 RequestBody requestFile_price = RequestBody.create(MediaType.parse("multipart/form-data"), binding.editTextNumberPrice.getText().toString());
-                RequestBody requestFile_is_auction = null;
-                try {
-                    requestFile_is_auction = RequestBody.create(MediaType.parse("multipart/form-data"), binding.chipIsAuction.isChecked() ? "1" : "0");
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+                RequestBody requestFile_is_auction = RequestBody.create(MediaType.parse("multipart/form-data"), binding.chipIsAuction.isChecked() ? "1" : "0");
                 RequestBody requestFile_country = RequestBody.create(MediaType.parse("multipart/form-data"), "中国");
                 RequestBody requestFile_province = RequestBody.create(MediaType.parse("multipart/form-data"), "陕西省");
                 RequestBody requestFile_city = RequestBody.create(MediaType.parse("multipart/form-data"), "西安市");
                 RequestBody requestFile_contact = RequestBody.create(MediaType.parse("multipart/form-data"), "");
                 RequestBody requestFile_post_code = RequestBody.create(MediaType.parse("multipart/form-data"), "");
 
-                MyRetrofit.serviceAPI.addProduct("bearer " + MMKV.defaultMMKV().getString("token", null), myClass, requestFile_title, requestFile_number, requestFile_information, requestFile_price, requestFile_is_auction, requestFile_country, requestFile_province, requestFile_city, requestFile_contact, requestFile_post_code, parts).enqueue(new Callback() {
+                call = MyRetrofit.serviceAPI.addProduct("bearer " + MMKV.defaultMMKV().getString("token", null), myClass, requestFile_title, requestFile_number, requestFile_information, requestFile_price, requestFile_is_auction, requestFile_country, requestFile_province, requestFile_city, requestFile_contact, requestFile_post_code, parts);
+                call.enqueue(new Callback() {
                     @Override
                     public void onResponse(Call call, Response response) {
-                        if (response.isSuccessful()) {
-                            binding.progressBarAddProduct.setVisibility(View.GONE);
-                            binding.constraintAddProduct.setVisibility(View.VISIBLE);
-                            Snackbar.make(view, "上传成功", Snackbar.LENGTH_SHORT).show();
-                            FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-                            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                            fragmentTransaction.setCustomAnimations(com.example.common.R.anim.slide_in_from_right, com.example.common.R.anim.slide_out_to_right, com.example.common.R.anim.slide_in_from_right, com.example.common.R.anim.slide_out_to_right);
-                            fragmentManager.popBackStack();
-                            fragmentTransaction.commit();
-                        } else {
-                            try {
-                                Log.d("恶心的问题", response.errorBody().byteString().toString());
-                            } catch (IOException e) {
-                                Log.d("恶心的问题", e.toString());
+
+                        try {
+                            if (response.isSuccessful()) {
+                                binding.progressBarAddProduct.setVisibility(View.GONE);
+                                binding.constraintAddProduct.setVisibility(View.VISIBLE);
+                                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                                fragmentTransaction.setCustomAnimations(com.example.common.R.anim.slide_in_from_right, com.example.common.R.anim.slide_out_to_right, com.example.common.R.anim.slide_in_from_right, com.example.common.R.anim.slide_out_to_right);
+                                fragmentManager.popBackStack();
+                                fragmentTransaction.commit();
+                            } else {
+                                Toast.makeText(getActivity(), "有问题", Toast.LENGTH_SHORT).show();
                             }
-                            Toast.makeText(getActivity(), "有问题", Toast.LENGTH_SHORT).show();
+                        } catch (Exception e) {
+                            Log.d("问题", e.toString());
                         }
                     }
 
@@ -187,7 +180,6 @@ public class AddProductFragment extends Fragment {
                         @Override
                         public void onResult(ArrayList<LocalMedia> result) {
                             for (LocalMedia localMedia : result) {
-                                Log.d("文件的地址", localMedia.getAvailablePath());
                                 list.add(new PicRecyclerViewEntity(new File(UtilsWay.getFilePathFromUri(getActivity(), Uri.parse(localMedia.getAvailablePath())))));
                             }
                             adapter.notifyDataSetChanged();
@@ -215,5 +207,16 @@ public class AddProductFragment extends Fragment {
         });
 
         return binding.getRoot();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (call != null) {
+//            call.cancel();
+//            if (getContext() != null) {
+//                Toast.makeText(getContext(), "上传失败", Toast.LENGTH_SHORT).show();
+//            }
+        }
     }
 }

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/more_shopping_car"
+        app:showAsAction="always"
         android:title="添加到购物车" />
     <item
         android:id="@+id/more_collect"
+        app:showAsAction="always"
         android:title="收藏" />
 </menu>

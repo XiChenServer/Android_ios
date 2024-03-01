@@ -1,9 +1,7 @@
 package com.example.core_net_work.model.goods;
 
-import com.example.common.room.entitues.Product;
 import com.example.core_net_work.model.BaseResult;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,26 +10,14 @@ import java.util.List;
  * @Version 1.0
  */
 public class SearchResult extends BaseResult {
-    SearchResultData data;
+    List<ProductSimpleInfoResult.CommodityInfo> data;
 
-    public SearchResultData getData() {
+
+    public List<ProductSimpleInfoResult.CommodityInfo> getData() {
         return data;
     }
 
-    public void setData(SearchResultData data) {
+    public void setData(List<ProductSimpleInfoResult.CommodityInfo> data) {
         this.data = data;
     }
-
-    public class SearchResultData {
-        private List<Product> products = new ArrayList<>();
-
-        public List<Product> getProducts() {
-            return products;
-        }
-
-        public void setProducts(List<Product> products) {
-            this.products = products;
-        }
-    }
-
 }

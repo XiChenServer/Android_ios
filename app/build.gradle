@@ -7,6 +7,10 @@ android {
     compileSdk 33
 
     defaultConfig {
+        ndk {
+            // 设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
         applicationId "com.example.sellcowhourse"
         minSdk 26
         targetSdk 33
@@ -38,6 +42,12 @@ android {
 }
 
 dependencies {
+    //sdk百度
+    implementation 'com.baidu.lbsyun:BaiduMapSDK_Location:9.1.8'
+    implementation 'com.baidu.lbsyun:BaiduMapSDK_Location:9.3.7'
+    //permission
+    // For developers using AndroidX in their applications
+    implementation 'pub.devrel:easypermissions:3.0.0'
     //Glide
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     //ARouter

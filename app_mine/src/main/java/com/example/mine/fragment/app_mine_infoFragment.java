@@ -68,6 +68,25 @@ public class app_mine_infoFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+//百度地图
+//        try {
+//            mLocationClient = new LocationClient(getApplicationContext());
+//            LocationClient.setAgreePrivacy(true);
+//            //声明LocationClient类
+//            mLocationClient.registerLocationListener(myListener);
+//            LocationClientOption option = new LocationClientOption();
+//            option.setCoorType("bd09ll");
+//            option.setScanSpan(1000);
+//            option.setIsNeedAddress(true);
+//            option.setNeedNewVersionRgc(true);
+////可选，设置是否需要最新版本的地址信息。默认需要，即参数为true
+//            mLocationClient.setLocOption(option);
+//            mLocationClient.start();
+//        } catch (Exception e) {
+//            Log.d("问题多多", e.toString());
+//
+//        }
+/********************************************************************************************************/
         View view = inflater.inflate(R.layout.fragment_app_mine_info, container, false);
         binding = FragmentAppMineInfoBinding.bind(view);
         //从数据库中加载数据
@@ -182,6 +201,7 @@ public class app_mine_infoFragment extends Fragment {
                 });
             }
         });
+
         binding.transparentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -257,27 +277,8 @@ public class app_mine_infoFragment extends Fragment {
                         binding.textViewNameName.setText(input);
                     }
                 }).show();
-
             }
         });
-
-//        binding.buttonSave.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-//                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//                app_mine_saveInfoFragment fragment = new app_mine_saveInfoFragment();
-//                Bundle bundle = new Bundle();
-//                bundle.putString("nickname", binding.textViewNameName.getText().toString());
-//                bundle.putString("phone", binding.textViewPhone.getText().toString());
-//                fragment.setArguments(bundle);
-//                fragmentTransaction.setCustomAnimations(com.example.common.R.anim.slide_in_from_right, com.example.common.R.anim.slide_out_to_right, com.example.common.R.anim.slide_in_from_right, com.example.common.R.anim.slide_out_to_right);
-//                fragmentTransaction.add(R.id.frame_mine, fragment);
-//                fragmentTransaction.addToBackStack(null);
-//                fragmentTransaction.commit();
-//            }
-//        });
-
         return view;
     }
 }

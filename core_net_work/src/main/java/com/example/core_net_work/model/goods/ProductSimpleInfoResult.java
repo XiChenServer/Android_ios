@@ -35,6 +35,15 @@ public class ProductSimpleInfoResult extends BaseResult {
 
 
     public class CommodityInfo {
+        public float rating;
+
+        public float getRating() {
+            return rating;
+        }
+
+        public void setRating(float rating) {
+            this.rating = rating;
+        }
 
         public Long ID;
         public String commodity_identity;

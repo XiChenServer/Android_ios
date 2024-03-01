@@ -71,6 +71,13 @@ public class ProductFragment extends Fragment {
                 }
             }
         });
+        binding.productViewpagerProduct.setOnScrollChangeListener(new View.OnScrollChangeListener() {
+            
+            @Override
+            public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+
+            }
+        });
         binding.productTablayoutProduct.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {

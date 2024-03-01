@@ -37,8 +37,8 @@ public class ShoppingCarOrderAdapter extends RecyclerView.Adapter {
         private TextView name;
         private TextView price;
         private ImageButton close;
-        private Chip add;
-        private Chip reduce;
+        private ImageButton add;
+        private ImageButton reduce;
         private TextView count;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -65,14 +65,13 @@ public class ShoppingCarOrderAdapter extends RecyclerView.Adapter {
         ShoppingCarOrder order = list.get(position);
         MyViewHolder viewHolder = (MyViewHolder) holder;
         Glide.with(context).load(order.getImage()).error(com.example.common.R.drawable.avatatloadfail).into(viewHolder.imageView);
-        viewHolder.price.setText(String.valueOf(order.getPrice()) + "yuan");
+        viewHolder.price.setText("￥ " + String.valueOf(order.getPrice()));
         viewHolder.name.setText(String.valueOf(order.getName()));
         viewHolder.count.setText(String.valueOf(order.getCount()));
         viewHolder.add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 int count = order.getCount();
-
                 order.setCount(++count);
                 notifyItemChanged(position);
             }

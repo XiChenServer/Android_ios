@@ -87,7 +87,7 @@ public class BoughtFragment extends Fragment {
                         binding.textViewBought.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    binding.textViewBought.setText("加载失败");
+                    binding.textViewBought.setText("加载有问题");
                     binding.textViewBought.setVisibility(View.VISIBLE);
                 }
                 binding.constraintBought.setVisibility(View.VISIBLE);
@@ -119,7 +119,7 @@ public class BoughtFragment extends Fragment {
                         binding.textViewBought.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    binding.textViewBought.setText("加载失败");
+                    binding.textViewBought.setText("加载有问题");
                     binding.textViewBought.setVisibility(View.VISIBLE);
                 }
                 binding.constraintBought.setVisibility(View.VISIBLE);

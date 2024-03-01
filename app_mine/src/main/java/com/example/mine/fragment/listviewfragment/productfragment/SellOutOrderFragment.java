@@ -76,7 +76,7 @@ public class SellOutOrderFragment extends Fragment {
     private void refreshData() {
         binding.constraintSellOut.setVisibility(View.GONE);
         binding.textViewSellOut.setVisibility(View.GONE);
-        MyRetrofit.serviceAPI.getBoughtInfo(MMKV.defaultMMKV().getString("token", null)).enqueue(new Callback<BoughtResult>() {
+        MyRetrofit.serviceAPI.getBoughtInfo("Bearer "+MMKV.defaultMMKV().getString("token", null)).enqueue(new Callback<BoughtResult>() {
             @Override
             public void onResponse(Call<BoughtResult> call, Response<BoughtResult> response) {
                 if (response.isSuccessful()) {
@@ -84,7 +84,7 @@ public class SellOutOrderFragment extends Fragment {
                         binding.textViewSellOut.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    binding.textViewSellOut.setText("加载失败");
+                    binding.textViewSellOut.setText("加载有问题");
                     binding.textViewSellOut.setVisibility(View.VISIBLE);
                 }
                 binding.constraintSellOut.setVisibility(View.VISIBLE);
@@ -106,7 +106,7 @@ public class SellOutOrderFragment extends Fragment {
     private void requestData() {
         binding.constraintSellOut.setVisibility(View.GONE);
         binding.textViewSellOut.setVisibility(View.GONE);
-        MyRetrofit.serviceAPI.getBoughtInfo(MMKV.defaultMMKV().getString("token", null)).enqueue(new Callback<BoughtResult>() {
+        MyRetrofit.serviceAPI.getBoughtInfo("Bearer "+MMKV.defaultMMKV().getString("token", null)).enqueue(new Callback<BoughtResult>() {
             @Override
             public void onResponse(Call<BoughtResult> call, Response<BoughtResult> response) {
                 if (response.isSuccessful()) {
@@ -114,7 +114,7 @@ public class SellOutOrderFragment extends Fragment {
                         binding.textViewSellOut.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    binding.textViewSellOut.setText("加载失败");
+                    binding.textViewSellOut.setText("加载有问题");
                     binding.textViewSellOut.setVisibility(View.VISIBLE);
                 }
                 binding.constraintSellOut.setVisibility(View.VISIBLE);

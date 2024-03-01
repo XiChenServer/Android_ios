@@ -26,13 +26,27 @@ public class ProductSimple {
     public String price;
     @ColumnInfo(name = "rating", typeAffinity = ColumnInfo.TEXT)
     public String rating;
+    @ColumnInfo(name = "ID", typeAffinity = ColumnInfo.TEXT)
+    public String id;
+    @ColumnInfo(name = "information", typeAffinity = ColumnInfo.TEXT)
+    public String information;
 
-    public ProductSimple(String image, String title, String subTitle, String price, String rating) {
+    public ProductSimple(String product_identity, String image, String title, String information, String price, String rating, String id) {
+        this.product_identity = product_identity;
         this.image = image;
         this.title = title;
-        this.subTitle = subTitle;
+        this.information = information;
         this.price = price;
         this.rating = rating;
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getProduct_identity() {

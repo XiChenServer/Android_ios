@@ -25,7 +25,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
+    viewBinding {
+        enable = true
+    }
 }
 dependencies {
     implementation(project(":common_utls"))
