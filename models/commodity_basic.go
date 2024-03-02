@@ -37,18 +37,19 @@ func (jm JSONMedia) Value() (driver.Value, error) {
 // CommodityBasic 表示商品的基本信息。
 type CommodityBasic struct {
 	gorm.Model
-	CommodityIdentity string      `gorm:"column:commodity_identity;type:varchar(36);index" json:"commodity_identity"` // CommodityIdentity 是商品的唯一标识符。
-	Title             string      `gorm:"column:title;type:varchar(36);" json:"title"`                                // Title 是商品的标题或名称。
-	Number            int         `gorm:"column:number" json:"number"`                                                // Number 表示商品的数量或数量。
-	Information       string      `gorm:"column:information;type:text" json:"information"`                            // Information 提供有关商品的额外详细信息。
-	Price             float64     `gorm:"column:price;type:decimal(10,2)" json:"price"`                               // Price 表示商品的价格。
-	SoldStatus        int         `gorm:"column:sold_status" json:"sold_status"`                                      // SoldStatus 表示商品是否已售出的状态。1:正在出售中。2：正在拍卖中。3: 提交订单，正在发货4：交易完成
-	Media             JSONMedia   `gorm:"column:media;type:json" json:"media"`                                        // Media 包含与商品相关的嵌套媒体信息。
-	IsAuction         int         `gorm:"column:is_auction" json:"is_auction"`                                        // 0是不拍卖，1是拍卖                                   // IsAuction 表示商品是否属于拍卖。
-	Address           JSONAddress `gorm:"column:address;type:json" json:"address"`                                    // Address 包含与商品相关的嵌套地址信息。
-	LikeCount         int         `gorm:"column:like_count" json:"like_count"`                                        // LikeCount 表示商品收到的点赞数。
-	CollectCount      int         `gorm:"column:collect_count" json:"collect_count"`                                  // CollectCount 表示商品被收藏的次数。
-	//UserInfo     *UserBasic `gorm:"foreignKey:UserIdentity;references:CommodityIdentity"`
+	CommodityIdentity string `gorm:"column:commodity_identity;type:varchar(36);index" json:"commodity_identity"` // CommodityIdentity 是商品的唯一标识符。
+	//UserInfo          *UserBasic  `gorm:"foreignKey:UserIdentity;references:CommodityIdentity"`
+	Title        string      `gorm:"column:title;type:varchar(36);" json:"title"`     // Title 是商品的标题或名称。
+	Number       int         `gorm:"column:number" json:"number"`                     // Number 表示商品的数量或数量。
+	Information  string      `gorm:"column:information;type:text" json:"information"` // Information 提供有关商品的额外详细信息。
+	Price        float64     `gorm:"column:price;type:decimal(10,2)" json:"price"`    // Price 表示商品的价格。
+	SoldStatus   int         `gorm:"column:sold_status" json:"sold_status"`           // SoldStatus 表示商品是否已售出的状态。1:正在出售中。2：正在拍卖中。: 提交订单，正在发货 3：已经卖完
+	Media        JSONMedia   `gorm:"column:media;type:json" json:"media"`             // Media 包含与商品相关的嵌套媒体信息。
+	IsAuction    int         `gorm:"column:is_auction" json:"is_auction"`             // 0是不拍卖，1是拍卖                                   // IsAuction 表示商品是否属于拍卖。
+	Address      JSONAddress `gorm:"column:address;type:json" json:"address"`         // Address 包含与商品相关的嵌套地址信息。
+	LikeCount    int         `gorm:"column:like_count" json:"like_count"`             // LikeCount 表示商品收到的点赞数。
+	CollectCount int         `gorm:"column:collect_count" json:"collect_count"`       // CollectCount 表示商品被收藏的次数。
+
 	Categories []*KindBasic `gorm:"many2many:kind_commodity_relations" json:"categories"` // Categories 表示与商品相关的类别。
 	LikedUsers []*KindBasic `gorm:"many2many:liked_commodity" json:"liked_users"`
 }

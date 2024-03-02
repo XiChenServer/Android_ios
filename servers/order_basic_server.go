@@ -111,7 +111,8 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 	//	}
 	//}
 	var product1 models.CommodityBasic
-
+	var lock sync.Mutex
+	lock.Lock()
 	if err := dao.DB.Where("id = ?", productID).Find(&product1).Error; err != nil {
 		log.Println("Error querying product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -124,7 +125,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		log.Println("Product does not belong to the seller.")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
-			"msg":  "商品已经售完",
+			"msg":  "商品数量不够",
 		})
 		return
 	}
@@ -137,12 +138,10 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		return
 	}
 
-	if product1.Number-productNum == 0 {
-		product1.SoldStatus = 4
+	if product1.Number-productNum <= 0 {
+		product1.SoldStatus = 3 // 已经卖完
 	}
-	product1.Number -= productNum
-	var lock sync.Mutex
-	lock.Lock()
+	product1.Number = product1.Number - productNum
 	err = dao.DB.Updates(&product1).Error
 	if err != nil {
 		log.Println("Error updating product:", err)
@@ -177,6 +176,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 			})
 			return
 		}
+
 		// 订单创建成功后发送消息到 Kafka
 		topic := "order-created"
 		message := fmt.Sprintf("Order created: %s", order.OrderIdentity)

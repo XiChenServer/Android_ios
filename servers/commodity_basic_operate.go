@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	_ "gorm.io/gorm"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
@@ -741,4 +742,192 @@ func (CommodityServer) UserDeletesProduct(c *gin.Context) {
 		"code": 200,
 		"msg":  "成功删除商品",
 	})
+}
+
+// 定义一个结构体来存储用户的推荐历史、当前页数和已获取的商品数量
+type UserRecommendation struct {
+	History           []models.CommodityBasic // 用户的推荐历史
+	Page              int                     // 用户当前的页数
+	PageSize          int                     // 每页显示的商品数量
+	TotalProductCount int                     // 用户获取的商品总数
+}
+
+// 初始化一个全局变量来存储所有用户的推荐历史、当前页数和已获取的商品数量
+var userRecommendations = make(map[string]*UserRecommendation)
+
+// 更新用户的推荐历史
+func updateUserRecommendation(userID string, products []models.CommodityBasic) {
+	// 获取用户的推荐历史
+	recommendation, ok := userRecommendations[userID]
+	if !ok {
+		// 如果用户没有推荐历史，则创建一个新的推荐历史，并将当前页数设置为1
+		recommendation = &UserRecommendation{
+			History:           nil,
+			Page:              1,
+			PageSize:          30, // 每页显示30个商品
+			TotalProductCount: 0,
+		}
+		userRecommendations[userID] = recommendation
+	}
+	// 更新用户的推荐历史
+	recommendation.History = products
+}
+
+// RecoProdByLAndC 用户推荐商品
+// @Summary 用户推荐商品
+// @Description 根据用户的点赞数和收藏数推荐商品
+// @Tags 商品推荐
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {string} json {"code":200,"msg":"成功获取商品","data":[]} "成功获取商品"
+// @Failure 400 {string} json {"code":400,"msg":"请求参数错误"} "请求参数错误"
+// @Router /user/product/reco_prod_by_l_and_c [get]
+// 通过收藏和点赞数来推荐商品
+func (CommodityServer) RecoProdByLAndC(c *gin.Context) {
+	// Parse user information
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 获取用户ID
+	userID := userClaims.Id
+
+	// 检查用户的推荐历史、当前页数和已获取的商品数量
+	recommendation, ok := userRecommendations[userID]
+	if !ok {
+		// 如果用户没有推荐历史，则创建一个新的推荐历史，并将当前页数设置为1
+		recommendation = &UserRecommendation{
+			History:           nil,
+			Page:              1,
+			PageSize:          30, // 每页显示30个商品
+			TotalProductCount: 0,
+		}
+		userRecommendations[userID] = recommendation
+	}
+
+	// 如果用户的推荐历史为空，则执行推荐算法获取新的推荐商品
+	if len(recommendation.History) == 0 {
+		var products []models.CommodityBasic
+		if err := dao.DB.Find(&products).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code": 400,
+				"msg":  "服务器内部出现问题",
+			})
+			return
+		}
+
+		// 按照点赞数和收藏数的总和进行排序
+		sort.Slice(products, func(i, j int) bool {
+			return (products[i].LikeCount + products[i].CollectCount) > (products[j].LikeCount + products[j].CollectCount)
+		})
+
+		// 更新用户的推荐历史
+		updateUserRecommendation(userID, products)
+	}
+
+	// 检查用户是否已获取到所有的推荐商品
+	if recommendation.TotalProductCount >= len(recommendation.History) {
+		c.JSON(http.StatusOK, gin.H{
+			"code": 200,
+			"msg":  "已经没有更多商品可推荐",
+		})
+		return
+	}
+
+	// 计算本次推荐的商品起始索引和结束索引
+	start := (recommendation.Page - 1) * recommendation.PageSize
+	end := start + recommendation.PageSize
+
+	// 检查切片范围是否超出推荐历史的长度
+	if start >= len(recommendation.History) {
+		// 如果起始索引超出了推荐历史的长度，则说明已经推荐完毕
+		c.JSON(http.StatusOK, gin.H{
+			"code": 200,
+			"msg":  "已经没有更多商品可推荐",
+		})
+		return
+	}
+
+	// 如果结束索引超出了推荐历史的长度，则将其设置为推荐历史的末尾
+	if end > len(recommendation.History) {
+		end = len(recommendation.History)
+	}
+
+	// 获取本次推荐的商品列表
+	recommendedProducts := recommendation.History[start:end]
+
+	// 更新已获取的商品数量
+	recommendation.TotalProductCount += len(recommendedProducts)
+
+	// 更新当前页数
+	recommendation.Page++
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "成功获取商品",
+		"data": recommendedProducts,
+	})
+	return
+}
+
+// UpdateRecommendation 刷新用户的推荐历史
+// @Summary 刷新用户的推荐历史
+// @Description 更新用户的推荐历史，获取新的推荐商品列表
+// @Tags 商品推荐
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {string} json {"code":200,"msg":"成功刷新","data":[]} "成功刷新"
+// @Failure 400 {string} json {"code":400,"msg":"服务器内部出现问题"} "服务器内部出现问题"
+// @Router /user/product/update_reco_prod_history [get]
+// 用来刷新用户的推荐历史
+func (CommodityServer) UpdateRecommendation(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 获取用户ID
+	userID := userClaims.Id
+	// 执行推荐算法获取新的推荐商品
+	var products []models.CommodityBasic
+	if err := dao.DB.Find(&products).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "服务器内部出现问题",
+		})
+		return
+	}
+
+	// 按照点赞数和收藏数的总和进行排序
+	sort.Slice(products, func(i, j int) bool {
+		return (products[i].LikeCount + products[i].CollectCount) > (products[j].LikeCount + products[j].CollectCount)
+	})
+
+	// 更新用户的推荐历史
+	updateUserRecommendation(userID, products)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "成功刷新",
+		"data": products,
+	})
+	return
 }

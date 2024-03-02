@@ -66,6 +66,10 @@ func Router() *gin.Engine {
 
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
+
+		user.GET("/product/update_reco_prod_history", servers.CommodityServer{}.UpdateRecommendation)
+		user.GET("/product/reco_prod_by_l_and_c", servers.CommodityServer{}.RecoProdByLAndC)
+
 		user.POST("/modify/info", servers.BasicOperateUser{}.UserModifyInfo)
 		user.POST("/upload/address", servers.BasicOperateUser{}.UserUploadAddress)
 		user.POST("/uploads/avatar", servers.BasicOperateUser{}.UserUploadsAvatar)

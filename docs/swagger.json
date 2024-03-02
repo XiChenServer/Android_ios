@@ -1902,6 +1902,76 @@
                 }
             }
         },
+        "/user/product/reco_prod_by_l_and_c": {
+            "get": {
+                "description": "根据用户的点赞数和收藏数推荐商品",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品推荐"
+                ],
+                "summary": "用户推荐商品",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"成功获取商品\",\"data\":[]} \"成功获取商品",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\":400,\"msg\":\"请求参数错误\"} \"请求参数错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/product/update_reco_prod_history": {
+            "get": {
+                "description": "更新用户的推荐历史，获取新的推荐商品列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品推荐"
+                ],
+                "summary": "刷新用户的推荐历史",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"成功刷新\",\"data\":[]} \"成功刷新",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\":400,\"msg\":\"服务器内部出现问题\"} \"服务器内部出现问题",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/register/phone": {
             "post": {
                 "description": "用户通过手机号进行注册，如果手机号已存在或验证码错误将返回相应的错误信息。",
