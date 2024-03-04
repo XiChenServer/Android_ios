@@ -67,6 +67,12 @@ func Router() *gin.Engine {
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 
+		user.POST("/order/find/buy_name", servers.OrderBasicServer{}.FindbuyOrderProduct)
+		user.POST("/shopping_car/find", servers.CommodityServer{}.FindShoppingCarProduct)
+		user.POST("/sell/find", servers.CommodityServer{}.FindSellProduct)
+		user.POST("/order/find/sell_name", servers.OrderBasicServer{}.FindSellOrderProduct)
+
+		user.POST("/uploads/background", servers.BasicOperateUser{}.UserUploadsBackground)
 		user.POST("/shopping_car/delete", servers.CommodityServer{}.DelShoppingCar)
 		user.GET("/shopping_car/view", servers.CommodityServer{}.ViewShoppingCar)
 		user.POST("/shopping_car/add", servers.CommodityServer{}.AddShoppingCar)
@@ -98,6 +104,7 @@ func Router() *gin.Engine {
 		}
 		order := user.Group("/order")
 		{
+			order.POST("/find/by_name", servers.OrderBasicServer{}.FindSellOrderProduct)
 			order.POST("/create", servers.OrderBasicServer{}.UserCreateOrder)
 			order.POST("/delete", servers.OrderBasicServer{}.UserDeleteOrder)
 			order.GET("/find/AllBuyOrder", servers.OrderBasicServer{}.FindAllBuyOrder)

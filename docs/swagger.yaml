@@ -43,6 +43,8 @@ definitions:
       avatar:
         description: 头像链接
         type: string
+      background:
+        type: string
       email:
         description: 电子邮件
         type: string
@@ -1351,6 +1353,34 @@ paths:
       summary: 查询所有出售订单
       tags:
       - 订单
+  /user/order/find/by_name:
+    post:
+      description: 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品名称
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"找到以下数据","data":[]}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"没找到"}
+          schema:
+            type: string
+      summary: 根据商品名称在用户订单中进行模糊匹配查询
+      tags:
+      - 订单
   /user/product/reco_prod_by_l_and_c:
     get:
       description: 根据用户的点赞数和收藏数推荐商品
@@ -1432,6 +1462,34 @@ paths:
       summary: 用户注册
       tags:
       - 用户方法
+  /user/sell/find:
+    post:
+      description: 根据商品名称在用户销售商品中进行模糊匹配查询，并返回查询结果
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品名称
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"找到以下数据","data":[]}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"没找到"}
+          schema:
+            type: string
+      summary: 根据商品名称在用户销售商品中进行模糊匹配查询
+      tags:
+      - 商品
   /user/shopping_car/add:
     post:
       description: 向用户的购物车中添加指定数量的商品，并返回添加结果
@@ -1496,6 +1554,34 @@ paths:
           schema:
             type: string
       summary: 从用户的购物车中删除指定商品
+      tags:
+      - 购物车
+  /user/shopping_car/find:
+    post:
+      description: 根据商品名称在用户购物车中进行模糊匹配查询，并返回查询结果
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品名称
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"找到以下数据","data":[]}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"没找到"}
+          schema:
+            type: string
+      summary: 根据商品名称在用户购物车中进行模糊匹配查询
       tags:
       - 购物车
   /user/shopping_car/view:
@@ -1690,6 +1776,54 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: 上传用户头像
+      tags:
+      - 用户私有方法
+  /user/uploads/background:
+    post:
+      consumes:
+      - application/json
+      description: 处理用户上传头像的请求，需要提供有效的用户身份验证令牌。
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户背景文件
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "文件上传成功"}'
+          schema:
+            type: string
+        "400":
+          description: 'code": 400, "msg": "请求错误"}'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "msg": "未授权"}'
+          schema:
+            type: string
+        "403":
+          description: 'code": 403, "msg": "禁止访问"}'
+          schema:
+            type: string
+        "413":
+          description: 'code": 413, "msg": "文件大小超出限制"}'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"}'
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 上传用户背景
       tags:
       - 用户私有方法
 swagger: "2.0"

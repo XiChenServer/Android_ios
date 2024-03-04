@@ -44,6 +44,7 @@ func (ja JSONAddress) Value() (driver.Value, error) {
 type UserBasic struct {
 	gorm.Model
 	Avatar               string            `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
+	Background           string            `gorm:"column:background;type:varchar(255);" json:"background"`
 	UserIdentity         string            `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
 	NickName             string            `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
 	Account              string            `gorm:"column:account;type:varchar(11);" json:"account"`
@@ -67,7 +68,6 @@ func (UserBasic) TableName() string {
 
 func (UserBasic) SaveUser(user *UserBasic) error {
 	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
-	fmt.Println(user.Name)
 	db := dao.DB
 	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
 	if err := db.Where("user_identity = ?", user.UserIdentity).Updates(user).Error; err != nil {
@@ -84,21 +84,32 @@ func (user UserBasic) SaveUserAvatar(userIdentity, avatar string) error {
 	if err != nil {
 		return err
 	}
-	//user.Password = u1.Password
-	//var userChat = &UserChatBasic{
-	//	UserIdentity: userIdentity,
-	//	NickName:     user.NickName,
-	//	Account:      user.Account,
-	//	Avatar:       avatar,
-	//}
-	//if err := db.Where("user_identity = ?", fmt.Sprintf("%v", user.UserIdentity)).Updates(userChat).Error; err != nil {
-	//	return err
-	//}
 
 	// 更新用户头像信息
 	if err := db.Model(&UserBasic{}).Where("user_identity = ?", fmt.Sprintf("%v", userIdentity)).Updates(map[string]interface{}{
 		"avatar": avatar,
 	}).Error; err != nil {
+		return err
+	}
+
+	// Save 方法会根据主键检查记录是否存在，存在则更新，不存在则插入
+	if err := db.Updates(user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (user UserBasic) SaveUserBackground(userIdentity, background string) error {
+	// 使用 GORM 连接数据库（这里使用 dao.DB，确保在你的代码中初始化了数据库连接）
+	db := dao.DB
+	var u1 UserBasic
+	err := dao.DB.Where("user_identity = ?", fmt.Sprintf("%v", userIdentity)).First(&u1).Error
+	if err != nil {
+		return err
+	}
+	fmt.Println(background)
+	// 更新用户头像信息
+	if err := db.Model(&UserBasic{}).Where("user_identity = ?", userIdentity).Update("background", background).Error; err != nil {
 		return err
 	}
 
@@ -128,7 +139,7 @@ func (UserBasic) FindUserByPhone(phone string) (bool, *UserBasic, error) {
 
 func (UserBasic) FindUserByAccount(account string) (bool, *UserBasic, error) {
 	var user UserBasic
-	result := dao.DB.Select("avatar, user_identity, nickname, account, phone_number, email, wechat_number, address, score").
+	result := dao.DB.Select("avatar, background, user_identity, nickname, account, phone_number, email, wechat_number, address, score").
 		Where("account = ?", account).
 		First(&user)
 

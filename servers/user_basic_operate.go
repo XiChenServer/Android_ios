@@ -12,6 +12,7 @@ import (
 )
 
 type User struct {
+	Background       string         `json:"background"`        //
 	Avatar           string         `json:"avatar"`            // 头像链接
 	UserIdentity     string         `json:"user_identity"`     // 用户身份信息
 	NickName         string         `json:"nickname"`          // 昵称
@@ -95,7 +96,8 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 	user_identity := pkg.GenerateUniqueID()
 	nickname := pkg.GenerateRandomCreativeNickname()
 	err = dao.DB.Create(&models.UserBasic{
-		Avatar:       "http://8.130.86.26:13000/picture/avatar/C5CDECC7DBFB43C21AD1FD025D713A5C.jpg",
+		Avatar:       "http://s9isqyrv9.hn-bkt.clouddn.com/background/9682B802FF091A4746DCC98526E2FE8B.jpg",
+		Background:   "http://s9isqyrv9.hn-bkt.clouddn.com/background/pngtree-beautiful-purple-blooming-christmas-snowflake-image_503982.jpg",
 		UserIdentity: user_identity,
 		NickName:     nickname,
 		Account:      account,
@@ -451,6 +453,102 @@ func (BasicOperateUser) UserUploadsAvatar(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "文件上传成功"})
 }
 
+// UserUploadsBackground 处理用户上传背景的请求
+// @Summary 上传用户背景
+// @Description 处理用户上传头像的请求，需要提供有效的用户身份验证令牌。
+// @Tags 用户私有方法
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer {token}"
+// @Param files formData file true "用户背景文件"
+// @Success 200 {string} json {"code": 200, "msg": "文件上传成功"}
+// @Failure 400 {string} json {"code": 400, "msg": "请求错误"}
+// @Failure 401 {string} json {"code": 401, "msg": "未授权"}
+// @Failure 403 {string} json {"code": 403, "msg": "禁止访问"}
+// @Failure 413 {string} json {"code": 413, "msg": "文件大小超出限制"}
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
+// @Router /user/uploads/background [post]
+func (BasicOperateUser) UserUploadsBackground(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	const MaxFileSize = 10 << 20
+	// 将 userClaim 转换为你的 UserClaims 结构体
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 解析多部分表单数据
+	err := c.Request.ParseMultipartForm(10 << 20) // 限制最大文件大小为 10MB
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 获取所有上传的文件
+	form := c.Request.MultipartForm
+	files := form.File["files"]
+	if len(files) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	// 处理第一个上传的文件
+	file := files[0]
+
+	// 检查文件大小
+	if file.Size > MaxFileSize {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件大小超出限制"})
+		return
+	}
+	fileName, err := file.Open()
+	if err != nil {
+		fmt.Println("无法打开文件:", err)
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件有问题"})
+		return
+	}
+	defer fileName.Close()
+	url, err := pkg.UploadToQiNiu(fileName, file.Size)
+	if err != nil {
+		fmt.Println("无法打开文件:", err)
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"code": http.StatusRequestEntityTooLarge, "msg": "文件上传有问题"})
+		return
+	}
+	exists, existsuser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if !exists {
+		// 用户已经存在，你可以通过 existingUser 使用用户信息
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	existsuser.Background = url
+
+	if err = existsuser.SaveUserBackground(userClaims.UserIdentity, url); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "文件上传成功"})
+}
+
 // UserGetAvatar 从阿里云服务器获取用户头像
 // @Summary 获取用户头像
 // @Description 从阿里云服务器获取用户头像，需要提供有效的用户身份验证令牌。
@@ -671,6 +769,7 @@ func (BasicOperateUser) UserGetInfo(c *gin.Context) {
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "获取信息成功",

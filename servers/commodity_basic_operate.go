@@ -1139,3 +1139,90 @@ func (CommodityServer) DelShoppingCar(c *gin.Context) {
 		"data": shoppingCar,
 	})
 }
+
+// FindSellProduct 根据商品名称在用户销售商品中进行模糊匹配查询。
+// @Summary 根据商品名称在用户销售商品中进行模糊匹配查询
+// @Description 根据商品名称在用户销售商品中进行模糊匹配查询，并返回查询结果
+// @Tags 商品
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param name formData string true "商品名称"
+// @Success 200 {string} json {"code":200,"msg":"找到以下数据","data":[]}
+// @Failure 400 {string} json {"code":400,"msg":"没找到"}
+// @Router /user/sell/find [post]
+func (CommodityServer) FindSellProduct(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	name := c.PostForm("name")
+
+	var products []models.CommodityBasic
+	err = dao.DB.Where("commodity_identity = ? AND (title LIKE ? or information LIKE ? )", userClaims.UserIdentity, "%"+name+"%", "%"+name+"%").Find(&products).Error
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "没找到",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "找到以下数据",
+		"data": products,
+	})
+}
+
+// FindShoppingCarProduct 根据商品名称在用户购物车中进行模糊匹配查询。
+// @Summary 根据商品名称在用户购物车中进行模糊匹配查询
+// @Description 根据商品名称在用户购物车中进行模糊匹配查询，并返回查询结果
+// @Tags 购物车
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param name formData string true "商品名称"
+// @Success 200 {string} json {"code":200,"msg":"找到以下数据","data":[]}
+// @Failure 400 {string} json {"code":400,"msg":"没找到"}
+// @Router /user/shopping_car/find [post]
+func (CommodityServer) FindShoppingCarProduct(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	name := c.PostForm("name")
+
+	var products []models.ShoppingCar
+	err = dao.DB.Where("product_id = ? AND name LIKE ? ", userClaims.UserIdentity, "%"+name+"%").Find(&products).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "没找到",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "找到以下数据",
+		"data": products,
+	})
+}
