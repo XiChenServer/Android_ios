@@ -67,6 +67,9 @@ func Router() *gin.Engine {
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 
+		user.POST("/shopping_car/delete", servers.CommodityServer{}.DelShoppingCar)
+		user.GET("/shopping_car/view", servers.CommodityServer{}.ViewShoppingCar)
+		user.POST("/shopping_car/add", servers.CommodityServer{}.AddShoppingCar)
 		user.GET("/product/update_reco_prod_history", servers.CommodityServer{}.UpdateRecommendation)
 		user.GET("/product/reco_prod_by_l_and_c", servers.CommodityServer{}.RecoProdByLAndC)
 

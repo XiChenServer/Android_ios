@@ -3,7 +3,7 @@ package models
 import "Android_ios/dao"
 
 func Init() {
-
+	dao.DB.AutoMigrate(&ShoppingCar{})
 	// CategoryCommodities
 
 	dao.DB.AutoMigrate(&KindCommodityRelation{})
@@ -23,4 +23,5 @@ func Init() {
 	dao.DB.AutoMigrate(&Message{})
 	dao.DB.AutoMigrate(&Contact{})
 	dao.DB.AutoMigrate(&Order{})
+
 }

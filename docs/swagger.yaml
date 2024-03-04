@@ -1432,6 +1432,95 @@ paths:
       summary: 用户注册
       tags:
       - 用户方法
+  /user/shopping_car/add:
+    post:
+      description: 向用户的购物车中添加指定数量的商品，并返回添加结果
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品数量
+        in: formData
+        name: number
+        required: true
+        type: string
+      - description: 商品单价
+        in: formData
+        name: price
+        required: true
+        type: string
+      - description: 商品ID
+        in: formData
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"购物车添加成功"}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"服务器内部出现问题"}
+          schema:
+            type: string
+      summary: 向用户的购物车中添加商品
+      tags:
+      - 购物车
+  /user/shopping_car/delete:
+    post:
+      description: 从用户的购物车中删除指定商品，并返回删除结果
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 购物车中商品ID
+        in: formData
+        name: shopping_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"删除成功","data":{}}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"删除失败"}
+          schema:
+            type: string
+      summary: 从用户的购物车中删除指定商品
+      tags:
+      - 购物车
+  /user/shopping_car/view:
+    get:
+      description: 获取用户的购物车中的商品列表
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"显示成功","data":[]} "显示成功
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"服务器内部出现问题"} "服务器内部出现问题
+          schema:
+            type: string
+      summary: 查看用户的购物车
+      tags:
+      - 购物车
   /user/uncollect/product:
     post:
       description: 用户取消收藏商品

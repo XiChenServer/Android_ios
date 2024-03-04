@@ -931,3 +931,211 @@ func (CommodityServer) UpdateRecommendation(c *gin.Context) {
 	})
 	return
 }
+
+// AddShoppingCar 向用户的购物车中添加商品
+// @Summary 向用户的购物车中添加商品
+// @Description 向用户的购物车中添加指定数量的商品，并返回添加结果
+// @Tags 购物车
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param number formData string true "商品数量"
+// @Param price formData string true "商品单价"
+// @Param product_id formData string true "商品ID"
+// @Success 200 {string} json {"code":200,"msg":"购物车添加成功"}
+// @Failure 400 {string} json {"code":400,"msg":"商品数量格式错误"}
+// @Failure 400 {string} json {"code":400,"msg":"服务器内部出现问题"}
+// @Router /user/shopping_car/add [post]
+func (CommodityServer) AddShoppingCar(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	numberStr := c.PostForm("number")
+	if numberStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "商品数量不能为空",
+		})
+		return
+	}
+	number, err := strconv.Atoi(numberStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "商品数量格式错误",
+		})
+		return
+	}
+
+	// 以下为原有代码，没有修改
+	priceStr := c.PostForm("price")
+	price, err := strconv.ParseFloat(priceStr, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "商品单价格式错误",
+		})
+		return
+	}
+
+	productIdStr := c.PostForm("product_id")
+	productId, err := strconv.Atoi(productIdStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "商品ID格式错误",
+		})
+		return
+	}
+
+	var product models.CommodityBasic
+	err = dao.DB.Where("id = ?", productId).First(&product).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "未找到对应商品",
+		})
+		return
+	}
+
+	shop := &models.ShoppingCar{
+		Price:      price * float64(number),
+		Name:       product.Title,
+		ProductId:  uint(productId),
+		ProductNum: uint(number),
+		Image:      product.Media[0].Image,
+		UserId:     userClaims.UserIdentity,
+	}
+
+	err = dao.DB.Create(shop).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "添加购物车失败",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "购物车添加成功",
+	})
+}
+
+// ViewShoppingCar 查看用户的购物车
+// @Summary 查看用户的购物车
+// @Description 获取用户的购物车中的商品列表
+// @Tags 购物车
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {string} json {"code":200,"msg":"显示成功","data":[]} "显示成功"
+// @Failure 400 {string} json {"code":400,"msg":"服务器内部出现问题"} "服务器内部出现问题"
+// @Router /user/shopping_car/view [get]
+func (CommodityServer) ViewShoppingCar(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		fmt.Println("1")
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	var shoppingCar []models.ShoppingCar
+	err := dao.DB.Where("user_id = ?", userClaims.UserIdentity).Find(&shoppingCar).Error
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "没找到数据",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "显示成功",
+		"data": shoppingCar,
+	})
+	return
+
+}
+
+// DelShoppingCar 从用户的购物车中删除指定商品
+// @Summary 从用户的购物车中删除指定商品
+// @Description 从用户的购物车中删除指定商品，并返回删除结果
+// @Tags 购物车
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param shopping_id formData string true "购物车中商品ID"
+// @Success 200 {string} json {"code":200,"msg":"删除成功","data":{}}
+// @Failure 400 {string} json {"code":400,"msg":"购物车中商品ID格式错误"}
+// @Failure 400 {string} json {"code":400,"msg":"未找到对应的购物车记录"}
+// @Failure 400 {string} json {"code":400,"msg":"删除失败"}
+// @Router /user/shopping_car/delete [post]
+func (CommodityServer) DelShoppingCar(c *gin.Context) {
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	shoppingID, err := strconv.Atoi(c.PostForm("shopping_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "购物车中商品ID格式错误",
+		})
+		return
+	}
+
+	// 查询符合条件的购物车记录
+	var shoppingCar models.ShoppingCar
+	err = dao.DB.Where("id = ? AND user_id = ?", shoppingID, userClaims.UserIdentity).First(&shoppingCar).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "未找到对应的购物车记录",
+		})
+		return
+	}
+
+	// 删除符合条件的购物车记录
+	err = dao.DB.Delete(&shoppingCar).Error
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "删除失败",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "删除成功",
+		"data": shoppingCar,
+	})
+}

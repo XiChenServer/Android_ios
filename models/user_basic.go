@@ -2,6 +2,7 @@ package models
 
 import (
 	"Android_ios/dao"
+	"Android_ios/pkg"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
@@ -163,12 +164,7 @@ func (UserBasic) FindUserByAccountAndPassword(account string) (bool, *UserBasic,
 }
 func (UserBasic) FindUserByPhoneAndPassword(phone, password string) (bool, *UserBasic, error) {
 	var user UserBasic
-	result := dao.DB.Where("phone_number = ? AND password = ?", phone, password).
-		//Preload("kind_basic").
-		//Preload("Commodity").
-		//Preload("LikedCommodities").
-		//Preload("CollectedCommodities").
-		First(&user)
+	result := dao.DB.Where("phone_number = ? AND password = ?", phone, pkg.GetHash(password)).First(&user)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
