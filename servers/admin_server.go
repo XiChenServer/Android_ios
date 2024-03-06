@@ -19,6 +19,7 @@ type AdminServer struct {
 // @Produce json
 // @Param name query string true "分类名称"
 // @Success 200 {string} json {"code": 200, "msg": "新的分类创建完成"}
+// @Failure 400 {string} json {"code": 400, "msg": "分类已存在"}
 // @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
 // @Router /admin/add_new_category_info [post]
 func (AdminServer) AddNewCategoryInfo(c *gin.Context) {
@@ -27,6 +28,13 @@ func (AdminServer) AddNewCategoryInfo(c *gin.Context) {
 	newCategory.Name = name
 	newCategory.KindIdentity = pkg.GenerateUniqueID()
 	newCategory.ParentID = 1
+	// 检查数据库中是否已经存在相同名称的分类
+	var existingCategory models.KindBasic
+	if err := dao.DB.Where("name = ?", name).First(&existingCategory).Error; err == nil {
+		// 如果存在相同名称的分类，返回错误响应
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "分类已存在"})
+		return
+	}
 	// 将新的分类插入到数据库中
 	result := dao.DB.Create(&newCategory)
 	if result.Error != nil {
@@ -45,6 +53,7 @@ func (AdminServer) AddNewCategoryInfo(c *gin.Context) {
 // @Param name query string true "分类名称"
 // @Param identity query string true "父分类的identity"
 // @Success 200 {string} json {"code": 200, "msg": "新的分类创建完成"}
+// @Failure 400 {string} json {"code": 400, "msg": "分类已存在"}
 // @Failure 404 {string} json {"code": 404, "msg": "父分类没有找到"}
 // @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
 // @Router /admin/add_new_son_category_info [post]
@@ -62,6 +71,14 @@ func (AdminServer) AddNewSonCategoryInfo(c *gin.Context) {
 
 	// 设置 ParentID 为父分类的 ID
 	newCategory.ParentID = parentCategory.ID
+
+	// 检查数据库中是否已经存在相同名称的子分类
+	var existingCategory models.KindBasic
+	if err := dao.DB.Where("name = ? AND parent_id = ?", name, parentCategory.ID).First(&existingCategory).Error; err == nil {
+		// 如果存在相同名称的子分类，返回错误响应
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "子分类已存在"})
+		return
+	}
 
 	// 将新的子分类的 ParentID 为父分类的 ID
 	result := dao.DB.Create(&newCategory)

@@ -20,8 +20,8 @@ import (
  * @return Client
  * @throws Exception
  */
-var AccessKeyID = "LTAI5tQdpsht36XJqYZevPGn"
-var AccessKeySecret = "dyThns69pEwBcGl1AjBby1YsGEyDcm"
+var AccessKeyID = "LTAI5tG17fnfGpThU8nMMjyJ"
+var AccessKeySecret = "LruAAgiljPvOrxDaEh2ZYXACugxC2h"
 
 var endpoint = "https://oss-cn-beijing.aliyuncs.com"
 var bucketName = "xichen-server"

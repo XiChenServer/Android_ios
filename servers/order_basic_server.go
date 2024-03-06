@@ -412,7 +412,7 @@ func (OrderBasicServer) FindSellOrderProduct(c *gin.Context) {
 	})
 }
 
-// FindbuyOrderProduct 根据商品名称在用户订单中进行模糊匹配查询。
+// FindBuyOrderProduct 根据商品名称在用户订单中进行模糊匹配查询。
 // @Summary 根据商品名称在用户订单中进行模糊匹配查询
 // @Description 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
 // @Tags 订单
@@ -422,7 +422,7 @@ func (OrderBasicServer) FindSellOrderProduct(c *gin.Context) {
 // @Success 200 {string} json {"code":200,"msg":"找到以下数据","data":[]}
 // @Failure 400 {string} json {"code":400,"msg":"没找到"}
 // @Router /user/order/find/by_name [post]
-func (OrderBasicServer) FindbuyOrderProduct(c *gin.Context) {
+func (OrderBasicServer) FindBuyOrderProduct(c *gin.Context) {
 	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -448,6 +448,55 @@ func (OrderBasicServer) FindbuyOrderProduct(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "找到以下数据",
+		"data": products,
+	})
+}
+
+// FindOrderDetail 根据唯一标识查找详细信息。
+// @Summary 根据商品名称在用户订单中进行模糊匹配查询
+// @Description 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
+// @Tags 订单
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param identity formData string identity "订单的唯一标识"
+// @Success 200 {string} json {"code":200,"msg":"找到以下数据","data":[]}
+// @Failure 400 {string} json {"code":400,"msg":"没找到"}
+// @Router /user/order/detail [post]
+func (OrderBasicServer) FindOrderDetail(c *gin.Context) {
+	// 检查用户授权信息
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	_, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 获取订单唯一标识
+	identity := c.PostForm("identity")
+
+	// 在数据库中查询订单信息
+	var products models.Order
+	err = dao.DB.Where("order_identity = ?", identity).Find(&products).Error
+	if err != nil {
+		// 如果未找到订单，返回 400 错误
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "没找到",
+		})
+		return
+	}
+
+	// 返回查询到的订单信息
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "找到以下数据",

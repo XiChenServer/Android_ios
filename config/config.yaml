@@ -11,9 +11,9 @@ redis:
   port: 13001
   password: ""
   db: 0
-oss:
-  Endpoint: "https://oss-cn-beijing.aliyuncs.com"
-  AccessKeyId: "LTAI5tQdpsht36XJqYZevPGn"
-  AccessKeySecret: "dyThns69pEwBcGl1AjBby1YsGEyDcm"
-  Bucket: "xichen-server"
+#oss:
+#  Endpoint: "https://oss-cn-beijing.aliyuncs.com"
+#  AccessKeyId: "LTAI5tG17fnfGpThU8nMMjyJ"
+#  AccessKeySecret: "LruAAgiljPvOrxDaEh2ZYXACugxC2h"
+#  Bucket: "xichen-server"
 server: "8.130.86.26"

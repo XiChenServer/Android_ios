@@ -37,6 +37,9 @@ func Router() *gin.Engine {
 	r.POST("/user/login/phone", servers.BasicOperateUser{}.UserLoginByPhoneCode)
 	r.POST("/user/login/password", servers.BasicOperateUser{}.UserLoginByPassword)
 	r.POST("/user/login/phone_and_password", servers.BasicOperateUser{}.UserLoginByPhoneAndPassword)
+	r.POST("/user/register/email", servers.BasicOperateUser{}.UserRegisterByEmail)
+	r.POST("/user/login/email", servers.BasicOperateUser{}.UserLoginByEmailCode)
+	r.POST("/user/login/email_and_password", servers.BasicOperateUser{}.UserLoginByEmailAndPassword)
 
 	r.GET("/products/simple_info", servers.CommodityServer{}.GetProductsSimpleInfo)
 	r.POST("/get/one_product_info", servers.CommodityServer{}.GetOneProAllInfo)
@@ -67,7 +70,8 @@ func Router() *gin.Engine {
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 
-		user.POST("/order/find/buy_name", servers.OrderBasicServer{}.FindbuyOrderProduct)
+		user.POST("/modify/password", servers.BasicOperateUser{}.ModifyUserPassword)
+		user.POST("/order/find/buy_name", servers.OrderBasicServer{}.FindBuyOrderProduct)
 		user.POST("/shopping_car/find", servers.CommodityServer{}.FindShoppingCarProduct)
 		user.POST("/sell/find", servers.CommodityServer{}.FindSellProduct)
 		user.POST("/order/find/sell_name", servers.OrderBasicServer{}.FindSellOrderProduct)
@@ -109,6 +113,7 @@ func Router() *gin.Engine {
 			order.POST("/delete", servers.OrderBasicServer{}.UserDeleteOrder)
 			order.GET("/find/AllBuyOrder", servers.OrderBasicServer{}.FindAllBuyOrder)
 			order.GET("/find/AllSellOrders", servers.OrderBasicServer{}.FindAllSellOrders)
+			order.POST("/detail", servers.OrderBasicServer{}.FindOrderDetail)
 		}
 	}
 

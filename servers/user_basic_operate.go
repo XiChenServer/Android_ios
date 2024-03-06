@@ -1338,7 +1338,9 @@ func (u BasicOperateUser) UserGetCollectPro(c *gin.Context) {
 		"msg":  "获取收藏的商品数据",
 		"data": collectedCommodities,
 	})
-} // UsersUncollectPro
+}
+
+// UsersUncollectPro
 // @Summary 取消收藏商品
 // @Description 用户取消收藏商品
 // @Tags 用户私有方法
@@ -1466,4 +1468,355 @@ func (u BasicOperateUser) UsersUncollectPro(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "取消收藏成功"})
+}
+
+// ModifyUserPassword
+// @Summary 修改用户密码
+// @Description 用户修改密码，需要提供授权信息和验证码
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}" // 用户授权信息
+// @Param password formData string true "新密码" // 新密码字段
+// @Param VerificationCode formData string true "验证码" // 验证码字段
+// @Success 200 {string} json {"code": 200, "msg": "密码更新成功"} // 成功更新密码
+// @Failure 401 {string} json {"code": 401, "message": "未授权"} // 未授权访问
+// @Failure 400 {string} json {"code": 400, "msg": "验证码错误"} // 验证码错误
+// @Failure 404 {string} json {"code": 404, "msg": "用户不存在"} // 用户不存在
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"} // 服务器内部错误
+// @Router /user/modify/password [post]
+func (u BasicOperateUser) ModifyUserPassword(c *gin.Context) {
+	// 检查用户授权信息
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 获取新密码
+	newPassword := c.PostForm("password")
+	VerificationCode := c.PostForm("VerificationCode")
+	// 查找用户是否存在
+	existingUser, existsUser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	if !existingUser {
+		c.JSON(http.StatusNotFound, gin.H{"code": http.StatusNotFound, "msg": "用户不存在"})
+		return
+	}
+
+	code, err := dao.RDB.Get(c, existsUser.PhoneNumber).Result()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "验证码没有发送",
+		})
+		return
+	}
+	dao.RDB.Del(c, existsUser.PhoneNumber)
+	if code != VerificationCode {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "验证码错误",
+		})
+		return
+	}
+
+	// 对密码进行哈希化
+	hashedPassword := pkg.GetHash(newPassword)
+
+	// 更新用户密码
+	existsUser.Password = hashedPassword
+	err = dao.DB.Where("user_identity = ?", userClaims.UserIdentity).Update("password", hashedPassword).Error // 保存到数据库中
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "密码更新失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "密码更新成功"})
+}
+
+// UserRegisterByEmail 向系统注册用户通过邮箱。
+// @Summary 用户注册
+// @Description 用户通过邮箱进行注册，如果邮箱已存在或验证码错误将返回相应的错误信息。
+// @Tags 用户方法
+// @Produce json
+// @Param email formData string true "邮箱"
+// @Param password formData string true "密码"
+// @Param verificationCode formData string true "验证码"
+// @Success 200 {string} json {"code": "200", "msg": "注册成功", "data": {"nickname": "用户昵称", "account": "用户账号": "", "token": "用户令牌"}}
+// @Failure 400 {string} json {"code": "400", "msg": "请求无效。服务器无法理解请求"}
+// @Failure 409 {string} json {"code": "409", "msg": "该邮箱已经注册"}
+// @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
+// @Router /user/register/email [post]
+func (BasicOperateUser) UserRegisterByEmail(c *gin.Context) {
+
+	email := c.PostForm("email")
+	fmt.Println(email)
+	password := c.PostForm("password")
+	verificationCode := c.PostForm("verificationCode")
+
+	_, exists, err := models.UserBasic{}.FindUserByEmail(email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if exists != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"code": "409",
+			"msg":  "该邮箱已经注册",
+		})
+		return
+	}
+
+	code, err := dao.RDB.Get(c, email).Result()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "验证码没有发送",
+		})
+		return
+	}
+	dao.RDB.Del(c, email)
+	if code != verificationCode {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "验证码错误",
+		})
+		return
+	}
+
+	var account string
+	for {
+		account = pkg.GetAccountNumber()
+		_, exists, err = models.UserBasic{}.FindUserByAccount(account)
+		if exists == nil && err == nil {
+			break
+		}
+	}
+	pass := pkg.GetHash(password)
+	fmt.Println(pass, password)
+	userIdentity := pkg.GenerateUniqueID()
+	nickname := pkg.GenerateRandomCreativeNickname()
+	err = dao.DB.Create(&models.UserBasic{
+		Avatar:       "http://s9isqyrv9.hn-bkt.clouddn.com/background/9682B802FF091A4746DCC98526E2FE8B.jpg",
+		Background:   "http://s9isqyrv9.hn-bkt.clouddn.com/background/pngtree-beautiful-purple-blooming-christmas-snowflake-image_503982.jpg",
+		UserIdentity: userIdentity,
+		NickName:     nickname,
+		Account:      account,
+		Password:     pass,
+		PhoneNumber:  "",
+		Email:        email,
+		WechatNumber: "",
+		Address:      nil, // Consider if you want to set the address
+		Rating:       4.5,
+	}).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+
+	token, err := pkg.GenerateToken(userIdentity, account, "")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+
+	var newUser models.UserBasic
+	err = dao.DB.Where("account = ?", account).Find(&newUser).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+
+	err = models.UserChatBasic{}.CreateUser(newUser).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": "200",
+		"msg":  "注册成功",
+		"data": map[string]interface{}{
+			"nickname": "您的昵称是: " + nickname,
+			"account":  "您的账号是: " + account,
+			"token":    token,
+		},
+	})
+}
+
+// UserLoginByEmailCode 通过邮箱和验证码进行用户登录。
+// @Summary 用户登录（验证码）
+// @Description 用户通过邮箱和验证码进行登录，如果邮箱未注册、验证码错误或其他错误将返回相应的错误信息。
+// @Tags 用户方法
+// @Produce json
+// @Param email formData string true "邮箱"
+// @Param verificationCode formData string true "验证码"
+// @Success 200 {string} json {"code": "200", "msg": "登录成功", "data": {"token": "用户token"}}
+// @Failure 400 {string} json {"code": "400", "msg": "请求无效。服务器无法理解请求"}
+// @Failure 409 {string} json {"code": "409", "msg": "该邮箱没有被注册"}
+// @Failure 500 {string} json {"code": "500", "msg": "服务器内部错误"}
+// @Router /user/login/email [post]
+func (BasicOperateUser) UserLoginByEmailCode(c *gin.Context) {
+	// 获取请求中的邮箱和验证码
+	email := c.PostForm("email")
+	verificationCode := c.PostForm("verificationCode")
+
+	// 检查邮箱是否已经注册
+	_, existsUser, err := models.UserBasic{}.FindUserByEmail(email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if existsUser == nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"code": "409",
+			"msg":  "该邮箱没有被注册",
+		})
+		return
+	}
+
+	// 检查验证码
+	code, err := dao.RDB.Get(c, email).Result()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "验证码没有发送",
+		})
+		return
+	}
+	dao.RDB.Del(c, email)
+	if code != verificationCode {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "验证码错误",
+		})
+		return
+	}
+
+	// 生成token
+	token, err := pkg.GenerateToken(existsUser.UserIdentity, existsUser.Account, existsUser.PhoneNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+
+	// 返回登录成功消息
+	c.JSON(http.StatusOK, gin.H{
+		"code": "200",
+		"msg":  "登录成功",
+		"data": map[string]interface{}{
+			"token": token,
+		},
+	})
+	return
+}
+
+// UserLoginByEmailAndPassword 通过邮箱和密码进行用户登录。
+// @Summary 用户登录（使用邮箱和密码）
+// @Description 用户通过邮箱和密码进行登录
+// @Tags 用户方法
+// @Produce json
+// @Param email formData string true "邮箱"
+// @Param password formData string true "密码"
+// @Success 200 {json} json "{"code": 200, "msg": "登录成功", "data": {"token": "jwt_token_here"}}"
+// @Failure 400 {json} json "{"code": 400, "msg": "请求无效。服务器无法理解请求"}"
+// @Failure 401 {json} json "{"code": 401, "msg": "该邮箱没有被注册"}"
+// @Failure 400 {json} json "{"code": 400, "msg": "邮箱或密码错误"}"
+// @Failure 500 {json} json "{"code": 500, "msg": "服务器内部错误"}"
+// @Router /user/login/email_and_password [post]
+func (BasicOperateUser) UserLoginByEmailAndPassword(c *gin.Context) {
+	// 获取请求中的邮箱和密码
+	email := c.PostForm("email")
+	password := c.PostForm("password")
+
+	// 检查邮箱是否已经注册
+	_, existsUser, err := models.UserBasic{}.FindUserByEmail(email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+	if existsUser == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code": 401,
+			"msg":  "该邮箱没有被注册",
+		})
+		return
+	}
+
+	pass := pkg.GetHash(password)
+	fmt.Println(pass, password)
+	// 检查密码是否匹配
+	fmt.Println(password)
+	// 检查账号是否已经注册
+	_, existsuser, err := models.UserBasic{}.FindUserByEmailAndPassword(email, pass)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	if existsuser == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "邮箱或密码错误",
+		})
+		return
+	}
+
+	// 生成token
+	token, err := pkg.GenerateToken(existsUser.UserIdentity, existsUser.Account, existsUser.PhoneNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "内部发生错误",
+		})
+		return
+	}
+
+	// 返回登录成功消息
+	c.JSON(http.StatusOK, gin.H{
+		"code": "200",
+		"msg":  "登录成功",
+		"data": map[string]interface{}{
+			"token": token,
+		},
+	})
 }

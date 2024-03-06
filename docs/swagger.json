@@ -46,6 +46,12 @@
                             "type": "string"
                         }
                     },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"分类已存在\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
                         "schema": {
@@ -87,6 +93,12 @@
                 "responses": {
                     "200": {
                         "description": "code\": 200, \"msg\": \"新的分类创建完成\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"分类已存在\"}",
                         "schema": {
                             "type": "string"
                         }
@@ -1336,6 +1348,114 @@
                 }
             }
         },
+        "/user/login/email": {
+            "post": {
+                "description": "用户通过邮箱和验证码进行登录，如果邮箱未注册、验证码错误或其他错误将返回相应的错误信息。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户方法"
+                ],
+                "summary": "用户登录（验证码）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "verificationCode",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": \"200\", \"msg\": \"登录成功\", \"data\": {\"token\": \"用户token\"}}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": \"400\", \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "code\": \"409\", \"msg\": \"该邮箱没有被注册\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/login/email_and_password": {
+            "post": {
+                "description": "用户通过邮箱和密码进行登录",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户方法"
+                ],
+                "summary": "用户登录（使用邮箱和密码）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"code\": 200, \"msg\": \"登录成功\", \"data\": {\"token\": \"jwt_token_here\"}}",
+                        "schema": {
+                            "type": "json"
+                        }
+                    },
+                    "400": {
+                        "description": "{\"code\": 400, \"msg\": \"邮箱或密码错误\"}",
+                        "schema": {
+                            "type": "json"
+                        }
+                    },
+                    "401": {
+                        "description": "{\"code\": 401, \"msg\": \"该邮箱没有被注册\"}",
+                        "schema": {
+                            "type": "json"
+                        }
+                    },
+                    "500": {
+                        "description": "{\"code\": 500, \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "json"
+                        }
+                    }
+                }
+            }
+        },
         "/user/login/password": {
             "post": {
                 "description": "用户通过账号和密码进行登录，如果账号未注册、密码错误或其他错误将返回相应的错误信息。",
@@ -1719,6 +1839,73 @@
                 }
             }
         },
+        "/user/modify/password": {
+            "post": {
+                "description": "用户修改密码，需要提供授权信息和验证码",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户私有方法"
+                ],
+                "summary": "修改用户密码",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "新密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "VerificationCode",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"密码更新成功\"} // 成功更新密码",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"验证码错误\"} // 验证码错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"message\": \"未授权\"} // 未授权访问",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": 404, \"msg\": \"用户不存在\"} // 用户不存在",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"} // 服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/order/create": {
             "post": {
                 "description": "创建订单接口",
@@ -1825,6 +2012,47 @@
                     },
                     "500": {
                         "description": "code\":500,\"msg\":\"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/order/detail": {
+            "post": {
+                "description": "根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单"
+                ],
+                "summary": "根据商品名称在用户订单中进行模糊匹配查询",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "订单的唯一标识",
+                        "name": "identity",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"找到以下数据\",\"data\":[]}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\":400,\"msg\":\"没找到\"}",
                         "schema": {
                             "type": "string"
                         }
@@ -2007,6 +2235,67 @@
                     },
                     "400": {
                         "description": "code\":400,\"msg\":\"服务器内部出现问题\"} \"服务器内部出现问题",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/register/email": {
+            "post": {
+                "description": "用户通过邮箱进行注册，如果邮箱已存在或验证码错误将返回相应的错误信息。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户方法"
+                ],
+                "summary": "用户注册",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "verificationCode",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": \"200\", \"msg\": \"注册成功\", \"data\": {\"nickname\": \"用户昵称\", \"account\": \"用户账号\": \"\", \"token\": \"用户令牌\"}}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": \"400\", \"msg\": \"请求无效。服务器无法理解请求\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "code\": \"409\", \"msg\": \"该邮箱已经注册\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
                         "schema": {
                             "type": "string"
                         }

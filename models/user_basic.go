@@ -43,19 +43,19 @@ func (ja JSONAddress) Value() (driver.Value, error) {
 
 type UserBasic struct {
 	gorm.Model
-	Avatar               string            `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
-	Background           string            `gorm:"column:background;type:varchar(255);" json:"background"`
-	UserIdentity         string            `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
-	NickName             string            `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
-	Account              string            `gorm:"column:account;type:varchar(11);" json:"account"`
-	Password             string            `gorm:"column:password;type:varchar(255);" json:"password"`
-	PhoneNumber          string            `gorm:"column:phone_number;type:varchar(16);" json:"phone_number"`
-	Email                string            `gorm:"column:email;type:varchar(24);" json:"email"`
-	WechatNumber         string            `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
-	Address              JSONAddress       `gorm:"column:address;type:json;" json:"address"`
-	Rating               float32           `gorm:"column:score;type:decimal(10,2);" json:"rating"`
-	Name                 string            `gorm:"column:name;type:varchar(24);" json:"name"`
-	UserChatBasic        UserChatBasic     `gorm:"foreignKey:UserIdentity"`
+	Avatar       string      `gorm:"column:avatar;type:varchar(255);" json:"avatar"`
+	Background   string      `gorm:"column:background;type:varchar(255);" json:"background"`
+	UserIdentity string      `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
+	NickName     string      `gorm:"column:nickname;type:varchar(24);" json:"nickname"`
+	Account      string      `gorm:"column:account;type:varchar(11);" json:"account"`
+	Password     string      `gorm:"column:password;type:varchar(255);" json:"password"`
+	PhoneNumber  string      `gorm:"column:phone_number;type:varchar(16);" json:"phone_number"`
+	Email        string      `gorm:"column:email;type:varchar(24);" json:"email"`
+	WechatNumber string      `gorm:"column:wechat_number;type:varchar(24);" json:"wechat_number"`
+	Address      JSONAddress `gorm:"column:address;type:json;" json:"address"`
+	Rating       float32     `gorm:"column:score;type:decimal(10,2);" json:"rating"`
+	Name         string      `gorm:"column:name;type:varchar(24);" json:"name"`
+	//UserChatBasic        UserChatBasic     `gorm:"foreignKey:UserIdentity"`
 	Commodity            []*CommodityBasic `gorm:"foreignKey:CommodityIdentity;references:UserIdentity"`
 	LikedCommodities     []*CommodityBasic `gorm:"many2many:liked_commodity;"`     //foreignKey:UserIdentity;joinForeignKey:LikedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
 	CollectedCommodities []*CommodityBasic `gorm:"many2many:collected_commodity;"` //foreignKey:UserIdentity;joinForeignKey:CollectedIdentity;references:CommodityIdentity;joinReferences:CommodityIdentity"`
@@ -137,6 +137,23 @@ func (UserBasic) FindUserByPhone(phone string) (bool, *UserBasic, error) {
 	return true, &user, nil
 }
 
+func (UserBasic) FindUserByEmail(email string) (bool, *UserBasic, error) {
+	var user UserBasic
+	result := dao.DB.Select("avatar, user_identity, nickname, account, phone_number, email, wechat_number, address, score").
+		Where("email = ?", email).
+		First(&user).Statement
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			log.Printf("Record not found for phone: %s", email)
+			return false, nil, nil
+		}
+		log.Printf("Error executing query: %v", result.Error)
+		return false, nil, result.Error
+	}
+
+	return true, &user, nil
+}
+
 func (UserBasic) FindUserByAccount(account string) (bool, *UserBasic, error) {
 	var user UserBasic
 	result := dao.DB.Select("avatar, background, user_identity, nickname, account, phone_number, email, wechat_number, address, score").
@@ -177,6 +194,22 @@ func (UserBasic) FindUserByPhoneAndPassword(phone, password string) (bool, *User
 	var user UserBasic
 	result := dao.DB.Where("phone_number = ? AND password = ?", phone, pkg.GetHash(password)).First(&user)
 
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// 未找到记录
+			return false, nil, nil
+		}
+		// 查询时发生错误
+		return false, nil, result.Error
+	}
+
+	// 找到记录
+	return true, &user, nil
+}
+
+func (UserBasic) FindUserByEmailAndPassword(email, password string) (bool, *UserBasic, error) {
+	var user UserBasic
+	result := dao.DB.Where("email = ? AND password = ?", email, password).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// 未找到记录
