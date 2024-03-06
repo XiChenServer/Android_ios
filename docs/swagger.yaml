@@ -1356,6 +1356,51 @@ paths:
       summary: 修改用户密码
       tags:
       - 用户私有方法
+  /user/modify/password/by_email:
+    post:
+      description: 用户修改密码，需要提供授权信息和验证码
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 新密码
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: 验证码
+        in: formData
+        name: VerificationCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'code": 200, "msg": "密码更新成功"} // 成功更新密码'
+          schema:
+            type: string
+        "400":
+          description: 'code": 400, "msg": "验证码错误"} // 验证码错误'
+          schema:
+            type: string
+        "401":
+          description: 'code": 401, "message": "未授权"} // 未授权访问'
+          schema:
+            type: string
+        "404":
+          description: 'code": 404, "msg": "用户不存在"} // 用户不存在'
+          schema:
+            type: string
+        "500":
+          description: 'code": 500, "msg": "服务器内部错误"} // 服务器内部错误'
+          schema:
+            type: string
+      summary: 修改用户密码(通过邮箱验证码)
+      tags:
+      - 用户私有方法
   /user/order/create:
     post:
       description: 创建订单接口
@@ -1456,7 +1501,7 @@ paths:
           description: code":400,"msg":"没找到"}
           schema:
             type: string
-      summary: 根据商品名称在用户订单中进行模糊匹配查询
+      summary: 根据唯一标识查找详细信息。
       tags:
       - 订单
   /user/order/find/AllBuyOrder:
@@ -1505,7 +1550,7 @@ paths:
       summary: 查询所有出售订单
       tags:
       - 订单
-  /user/order/find/by_name:
+  /user/order/find/buy/by_name:
     post:
       description: 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
       parameters:
@@ -1530,7 +1575,35 @@ paths:
           description: code":400,"msg":"没找到"}
           schema:
             type: string
-      summary: 根据商品名称在用户订单中进行模糊匹配查询
+      summary: （购买订单）根据商品名称在用户订单中进行模糊匹配查询
+      tags:
+      - 订单
+  /user/order/find/sell/by_name:
+    post:
+      description: 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 商品名称
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"找到以下数据","data":[]}
+          schema:
+            type: string
+        "400":
+          description: code":400,"msg":"没找到"}
+          schema:
+            type: string
+      summary: （出售订单）根据商品名称在用户订单中进行模糊匹配查询
       tags:
       - 订单
   /user/product/reco_prod_by_l_and_c:

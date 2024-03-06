@@ -53,7 +53,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		return
 	}
 	// 检查手机号是否已经注册
-	exists, _, err := models.UserBasic{}.FindUserByPhone(user.PhoneNumber)
+	_, exists, err := models.UserBasic{}.FindUserByPhone(user.PhoneNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -61,7 +61,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		})
 		return
 	}
-	if exists {
+	if exists != nil {
 		// 用户已经存在，你可以通过 existingUser 使用用户信息
 		c.JSON(http.StatusConflict, gin.H{
 			"code": "409",
@@ -88,8 +88,8 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 	var account string
 	for {
 		account = pkg.GetAccountNumber()
-		exists, _, err = models.UserBasic{}.FindUserByAccount(account)
-		if !exists && err == nil {
+		_, exists, err = models.UserBasic{}.FindUserByAccount(account)
+		if exists == nil && err == nil {
 			break
 		}
 	}
@@ -115,7 +115,7 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		})
 		return
 	}
-	token, err := pkg.GenerateToken(user_identity, account, user.PhoneNumber)
+	token, err := pkg.GenerateToken(user_identity, account, user.PhoneNumber, user.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -207,7 +207,7 @@ func (BasicOperateUser) UserLoginByPhoneCode(c *gin.Context) {
 		})
 		return
 	}
-	token, err := pkg.GenerateToken(existsuser.UserIdentity, existsuser.Account, user.PhoneNumber)
+	token, err := pkg.GenerateToken(existsuser.UserIdentity, existsuser.Account, user.PhoneNumber, existsuser.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -272,7 +272,7 @@ func (BasicOperateUser) UserLoginByPassword(c *gin.Context) {
 		return
 	}
 
-	token, err := pkg.GenerateToken(existsuser.UserIdentity, user.Account, existsuser.PhoneNumber)
+	token, err := pkg.GenerateToken(existsuser.UserIdentity, user.Account, existsuser.PhoneNumber, existsuser.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -312,8 +312,9 @@ func (BasicOperateUser) UserLoginByPhoneAndPassword(c *gin.Context) {
 			"msg":  "请求无效。服务器无法理解请求",
 		})
 	}
+	fmt.Println(user.PhoneNumber, user.Password)
 	// 检查账号是否已经注册
-	exists, existsuser, err := models.UserBasic{}.FindUserByPhoneAndPassword(user.PhoneNumber, pkg.GetHash(user.Password))
+	exists, existsuser, err := models.UserBasic{}.FindUserByPhoneAndPassword(user.PhoneNumber, user.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -340,7 +341,7 @@ func (BasicOperateUser) UserLoginByPhoneAndPassword(c *gin.Context) {
 	//	})
 	//	return
 	//}
-	token, err := pkg.GenerateToken(existsuser.UserIdentity, existsuser.Account, existsuser.PhoneNumber)
+	token, err := pkg.GenerateToken(existsuser.UserIdentity, existsuser.Account, existsuser.PhoneNumber, existsuser.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -1632,7 +1633,7 @@ func (BasicOperateUser) UserRegisterByEmail(c *gin.Context) {
 		return
 	}
 
-	token, err := pkg.GenerateToken(userIdentity, account, "")
+	token, err := pkg.GenerateToken(userIdentity, account, "", email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -1724,7 +1725,7 @@ func (BasicOperateUser) UserLoginByEmailCode(c *gin.Context) {
 	}
 
 	// 生成token
-	token, err := pkg.GenerateToken(existsUser.UserIdentity, existsUser.Account, existsUser.PhoneNumber)
+	token, err := pkg.GenerateToken(existsUser.UserIdentity, existsUser.Account, existsUser.PhoneNumber, email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -1802,7 +1803,7 @@ func (BasicOperateUser) UserLoginByEmailAndPassword(c *gin.Context) {
 	}
 
 	// 生成token
-	token, err := pkg.GenerateToken(existsUser.UserIdentity, existsUser.Account, existsUser.PhoneNumber)
+	token, err := pkg.GenerateToken(existsUser.UserIdentity, existsUser.Account, existsUser.PhoneNumber, email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
@@ -1819,4 +1820,80 @@ func (BasicOperateUser) UserLoginByEmailAndPassword(c *gin.Context) {
 			"token": token,
 		},
 	})
+}
+
+// ModifyUserPasswordByEmail
+// @Summary 修改用户密码(通过邮箱验证码)
+// @Description 用户修改密码，需要提供授权信息和验证码
+// @Tags 用户私有方法
+// @Produce json
+// @Param Authorization header string true "Bearer {token}" // 用户授权信息
+// @Param password formData string true "新密码" // 新密码字段
+// @Param VerificationCode formData string true "验证码" // 验证码字段
+// @Success 200 {string} json {"code": 200, "msg": "密码更新成功"} // 成功更新密码
+// @Failure 401 {string} json {"code": 401, "message": "未授权"} // 未授权访问
+// @Failure 400 {string} json {"code": 400, "msg": "验证码错误"} // 验证码错误
+// @Failure 404 {string} json {"code": 404, "msg": "用户不存在"} // 用户不存在
+// @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"} // 服务器内部错误
+// @Router /user/modify/password/by_email [post]
+func (u BasicOperateUser) ModifyUserPasswordByEmail(c *gin.Context) {
+	// 检查用户授权信息
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+
+	// 获取新密码
+	newPassword := c.PostForm("password")
+	VerificationCode := c.PostForm("VerificationCode")
+	// 查找用户是否存在
+	existingUser, existsUser, err := models.UserBasic{}.FindUserByAccountAndPassword(userClaims.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "服务器内部错误"})
+		return
+	}
+
+	if !existingUser {
+		c.JSON(http.StatusNotFound, gin.H{"code": http.StatusNotFound, "msg": "用户不存在"})
+		return
+	}
+
+	code, err := dao.RDB.Get(c, existsUser.Email).Result()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "验证码没有发送",
+		})
+		return
+	}
+	dao.RDB.Del(c, existsUser.PhoneNumber)
+	if code != VerificationCode {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "验证码错误",
+		})
+		return
+	}
+
+	// 对密码进行哈希化
+	hashedPassword := pkg.GetHash(newPassword)
+
+	// 更新用户密码
+	existsUser.Password = hashedPassword
+	err = dao.DB.Where("user_identity = ?", userClaims.UserIdentity).Update("password", hashedPassword).Error // 保存到数据库中
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": http.StatusInternalServerError, "msg": "密码更新失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "msg": "密码更新成功"})
 }

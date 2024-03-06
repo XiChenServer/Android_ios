@@ -18,6 +18,7 @@ type Order struct {
 	Buyer           UserBasic      `gorm:"foreignKey:BuyerIdentity;references:UserIdentity"`
 	Seller          UserBasic      `gorm:"foreignKey:SellerIdentity;references:UserIdentity"`
 	Product         CommodityBasic `gorm:"foreignKey:ProductIdentity"`
+	Status          uint           `gorm:"column:status;type:uint;" json:"status"` // 1：待支付 2：支付完成，开始发货 3：订单完成 4：订单取消
 }
 
 func (Order) TableName() string {

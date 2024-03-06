@@ -165,6 +165,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 			Buyer:           buyer,
 			Seller:          seller,
 			Product:         product1,
+			Status:          1,
 		}
 
 		err = models.Order{}.CreateOrder(order)
@@ -369,8 +370,8 @@ func GetAllSellOrders(userID string) ([]models.Order, error) {
 	return orders, nil
 }
 
-// FindSellOrderProduct 根据商品名称在用户订单中进行模糊匹配查询。
-// @Summary 根据商品名称在用户订单中进行模糊匹配查询
+// FindSellOrderProduct （出售订单）根据商品名称在用户订单中进行模糊匹配查询。
+// @Summary （出售订单）根据商品名称在用户订单中进行模糊匹配查询
 // @Description 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
 // @Tags 订单
 // @Produce json
@@ -378,7 +379,7 @@ func GetAllSellOrders(userID string) ([]models.Order, error) {
 // @Param name formData string true "商品名称"
 // @Success 200 {string} json {"code":200,"msg":"找到以下数据","data":[]}
 // @Failure 400 {string} json {"code":400,"msg":"没找到"}
-// @Router /user/order/find/by_name [post]
+// @Router /user/order/find/sell/by_name [post]
 func (OrderBasicServer) FindSellOrderProduct(c *gin.Context) {
 	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
 	if !exists {
@@ -396,7 +397,7 @@ func (OrderBasicServer) FindSellOrderProduct(c *gin.Context) {
 	name := c.PostForm("name")
 
 	var products []models.Order
-	err = dao.DB.Where("seller_identity = ? AND (name LIKE ? or msg LIKE ?)", userClaims.UserIdentity, "%"+name+"%", "%"+name+"%").Find(&products).Error
+	err = dao.DB.Where("seller_identity = ? AND (name LIKE ? or msg LIKE ?)", userClaims.UserIdentity, "%"+name+"%", "%"+name+"%").Preload("Buyer").Preload("Seller").Preload("Product").Find(&products).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
@@ -412,8 +413,8 @@ func (OrderBasicServer) FindSellOrderProduct(c *gin.Context) {
 	})
 }
 
-// FindBuyOrderProduct 根据商品名称在用户订单中进行模糊匹配查询。
-// @Summary 根据商品名称在用户订单中进行模糊匹配查询
+// FindBuyOrderProduct （购买订单）根据商品名称在用户订单中进行模糊匹配查询。
+// @Summary （购买订单）根据商品名称在用户订单中进行模糊匹配查询
 // @Description 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
 // @Tags 订单
 // @Produce json
@@ -421,7 +422,7 @@ func (OrderBasicServer) FindSellOrderProduct(c *gin.Context) {
 // @Param name formData string true "商品名称"
 // @Success 200 {string} json {"code":200,"msg":"找到以下数据","data":[]}
 // @Failure 400 {string} json {"code":400,"msg":"没找到"}
-// @Router /user/order/find/by_name [post]
+// @Router /user/order/find/buy/by_name [post]
 func (OrderBasicServer) FindBuyOrderProduct(c *gin.Context) {
 	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
 	if !exists {
@@ -439,7 +440,9 @@ func (OrderBasicServer) FindBuyOrderProduct(c *gin.Context) {
 	name := c.PostForm("name")
 
 	var products []models.Order
-	err = dao.DB.Where("seller_identity = ? AND (name LIKE ? or msg LIKE ?)", userClaims.UserIdentity, "%"+name+"%", "%"+name+"%").Find(&products).Error
+	//err = dao.DB.Where("order_identity = ?", identity).Preload("Buyer").Preload("Seller").Preload("Product").Find(&products).Error
+
+	err = dao.DB.Where("seller_identity = ? AND (name LIKE ? or msg LIKE ?)", userClaims.UserIdentity, "%"+name+"%", "%"+name+"%").Preload("Buyer").Preload("Seller").Preload("Product").Find(&products).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
@@ -456,7 +459,7 @@ func (OrderBasicServer) FindBuyOrderProduct(c *gin.Context) {
 }
 
 // FindOrderDetail 根据唯一标识查找详细信息。
-// @Summary 根据商品名称在用户订单中进行模糊匹配查询
+// @Summary 根据唯一标识查找详细信息。
 // @Description 根据商品名称在用户订单中进行模糊匹配查询，并返回查询结果
 // @Tags 订单
 // @Produce json
@@ -486,7 +489,15 @@ func (OrderBasicServer) FindOrderDetail(c *gin.Context) {
 
 	// 在数据库中查询订单信息
 	var products models.Order
-	err = dao.DB.Where("order_identity = ?", identity).Find(&products).Error
+	//var products []models.Order
+	err = dao.DB.Where("order_identity = ?", identity).Preload("Buyer").Preload("Seller").Preload("Product").Find(&products).Error
+	//if err != nil {
+	//	// 处理查询错误
+	//}
+	//
+	//// products 变量现在包含了所有满足条件的订单信息
+	//
+	//err = dao.DB.Where("order_identity = ?", identity).Find(&products).Error
 	if err != nil {
 		// 如果未找到订单，返回 400 错误
 		c.JSON(http.StatusBadRequest, gin.H{

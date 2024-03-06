@@ -15,6 +15,7 @@ type UserClaims struct {
 	UserIdentity string `gorm:"column:user_identity;type:varchar(36);" json:"user_identity"`
 	Account      string `json:"account"`
 	PhoneNumber  string `json:"phone_number"`
+	Email        string `json:"email"`
 	jwt.StandardClaims
 }
 
@@ -34,11 +35,12 @@ func getSecretKey() string {
 }
 
 // GenerateToken 生成带有用户声明的JWT令牌
-func GenerateToken(userIdentity, account, phoneNumber string) (string, error) {
+func GenerateToken(userIdentity, account, phoneNumber, email string) (string, error) {
 	userClaims := &UserClaims{
 		UserIdentity: userIdentity,
 		Account:      account,
 		PhoneNumber:  phoneNumber,
+		Email:        email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 		},
