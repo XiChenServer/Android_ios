@@ -298,7 +298,7 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 	}
 
 	var user models.UserBasic
-	if err := dao.DB.Select("avatar,nickname,account,phone_number,score,name,user_identity").
+	if err := dao.DB.Select("avatar,nickname,account,phone_number,score,name,user_identity,background").
 		Where("user_identity = ?", commodity.CommodityIdentity).
 		First(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

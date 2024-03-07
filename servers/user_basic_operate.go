@@ -132,14 +132,14 @@ func (BasicOperateUser) UserRegisterByPhone(c *gin.Context) {
 		})
 		return
 	}
-	err = models.UserChatBasic{}.CreateUser(user1).Error
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "内部发生错误",
-		})
-		return
-	}
+	//err = models.UserChatBasic{}.CreateUser(user1).Error
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{
+	//		"code": 500,
+	//		"msg":  "内部发生错误",
+	//	})
+	//	return
+	//}
 	c.JSON(http.StatusOK, gin.H{
 		"code": "200",
 		"msg":  "注册成功",
@@ -1652,14 +1652,14 @@ func (BasicOperateUser) UserRegisterByEmail(c *gin.Context) {
 		return
 	}
 
-	err = models.UserChatBasic{}.CreateUser(newUser).Error
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "内部发生错误",
-		})
-		return
-	}
+	//err = models.UserChatBasic{}.CreateUser(newUser).Error
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{
+	//		"code": 500,
+	//		"msg":  "内部发生错误",
+	//	})
+	//	return
+	//}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": "200",
