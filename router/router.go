@@ -66,9 +66,12 @@ func Router() *gin.Engine {
 		}(ws)
 		//servers.MsgHandler(c, ws)
 	})
-
+	r.GET("/auction/data", servers.BidRecordServer{}.FindAuctionData)
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
+
+		user.GET("/auction/info", servers.BidRecordServer{}.FindUserAuctionInfo)
+		user.POST("/bid", servers.BidRecordServer{}.BidRecord)
 
 		user.POST("/modify/password/by_email", servers.BasicOperateUser{}.ModifyUserPasswordByEmail)
 		user.POST("/modify/password", servers.BasicOperateUser{}.ModifyUserPassword)

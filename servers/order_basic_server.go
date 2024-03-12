@@ -88,28 +88,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		})
 		return
 	}
-	//// 查询购买者的所有订单信息
-	//var buyerOrders []models.Order
-	//if err := dao.DB.Where("buyer_identity = ?", userClaims.UserIdentity).Find(&buyerOrders).Error; err != nil {
-	//	log.Println("Error querying buyer's orders:", err)
-	//	c.JSON(http.StatusInternalServerError, gin.H{
-	//		"code": 500,
-	//		"msg":  "服务器内部错误",
-	//	})
-	//	return
-	//}
 
-	//// 遍历订单，检查是否存在相同的产品ID
-	//for _, existingOrder := range buyerOrders {
-	//	if existingOrder.ProductIdentity == uint(productID) {
-	//		log.Println("Order already exists for the product.")
-	//		c.JSON(http.StatusBadRequest, gin.H{
-	//			"code": 400,
-	//			"msg":  "订单已存在",
-	//		})
-	//		return
-	//	}
-	//}
 	var product1 models.CommodityBasic
 	var lock sync.Mutex
 	lock.Lock()

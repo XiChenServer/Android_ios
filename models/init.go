@@ -20,6 +20,8 @@ func Init() {
 
 	// UserChatBasic
 	//dao.DB.AutoMigrate(&UserChatBasic{})
+	dao.DB.AutoMigrate(&BidRecord{})
+	dao.DB.AutoMigrate(&UserBidRecord{})
 	dao.DB.AutoMigrate(&Message{})
 	dao.DB.AutoMigrate(&Contact{})
 	dao.DB.AutoMigrate(&Order{})

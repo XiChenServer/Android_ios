@@ -154,6 +154,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/auction/data": {
+            "get": {
+                "description": "查询拍卖中的商品以及检查是否满足生成订单的条件，并根据情况生成订单并删除商品",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "拍卖"
+                ],
+                "summary": "获取拍卖数据",
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"拍卖数据如下\", \"data\": [{\"commodity_identity\": \"商品ID\", \"title\": \"商品标题\", \"number\": \"商品数量\", \"information\": \"商品信息\", \"price\": \"商品价格\", \"sold_status\": \"售出状态\", \"created_at\": \"创建时间\", \"updated_at\": \"更新时间\"}, ...]}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"无法获取拍卖数据或查询竞拍信息失败\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/chat/basic/create": {
             "post": {
                 "description": "从现有用户基本信息中创建用户聊天账号信息",
@@ -591,6 +617,120 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/auction/info": {
+            "get": {
+                "description": "查询特定用户的拍卖记录",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "拍卖"
+                ],
+                "summary": "查找用户的拍卖记录",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"数据如下\", \"data\": [{\"commodity_identity\": \"商品ID\", \"user_id\": \"用户ID\", \"current_bid_price\": \"当前竞拍价格\", \"current_bid_time\": \"当前竞拍时间\"}, ...]}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"请求错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": 404, \"msg\": \"没有找到数据\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/bid": {
+            "post": {
+                "description": "用户进行竞拍操作，根据用户提交的竞拍信息更新竞拍记录或创建新的竞拍记录",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "拍卖"
+                ],
+                "summary": "用户进行竞拍",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品ID",
+                        "name": "id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "竞拍价格",
+                        "name": "price",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\": 200, \"msg\": \"bid placed successfully\", \"current_bid_info\": {\"commodity_identity\": \"商品ID\", \"user_id\": \"用户ID\", \"current_bid_price\": \"当前竞拍价格\", \"current_bid_time\": \"当前竞拍时间\"}}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "code\": 400, \"msg\": \"无效的价格\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "code\": 401, \"msg\": \"未授权\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "code\": 404, \"msg\": \"商品未找到或不在竞拍中\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\": 500, \"msg\": \"服务器内部错误\"}",
                         "schema": {
                             "type": "string"
                         }

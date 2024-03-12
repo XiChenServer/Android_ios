@@ -109,9 +109,6 @@ func (CommodityServer) UserAddsProducts(c *gin.Context) {
 			})
 			return
 		}
-	} else {
-		// Set a default value or handle it as needed
-		isAuctionInt = 0 // Assuming 0 as a default value, update as per your requirement
 	}
 
 	// Validate and associate types
@@ -147,8 +144,10 @@ func (CommodityServer) UserAddsProducts(c *gin.Context) {
 
 	// Create product
 	status := 0
-	if isAuctionInt != status {
+	if isAuctionInt == status {
 		status = 1
+	} else {
+		status = isAuctionInt
 	}
 	addrJson := models.JSONAddress{modelAddr}
 	product := &models.CommodityBasic{
@@ -818,7 +817,7 @@ func (CommodityServer) RecoProdByLAndC(c *gin.Context) {
 	// 如果用户的推荐历史为空，则执行推荐算法获取新的推荐商品
 	if len(recommendation.History) == 0 {
 		var products []models.CommodityBasic
-		if err := dao.DB.Find(&products).Error; err != nil {
+		if err := dao.DB.Where("sold_status != 2").Find(&products).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code": 400,
 				"msg":  "服务器内部出现问题",
@@ -1211,7 +1210,7 @@ func (CommodityServer) FindShoppingCarProduct(c *gin.Context) {
 	name := c.PostForm("name")
 
 	var products []models.ShoppingCar
-	err = dao.DB.Where("product_id = ? AND name LIKE ? ", userClaims.UserIdentity, "%"+name+"%").Find(&products).Error
+	err = dao.DB.Where("user_id = ? AND name LIKE ? ", userClaims.UserIdentity, "%"+name+"%").Find(&products).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
