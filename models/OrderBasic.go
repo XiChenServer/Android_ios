@@ -26,12 +26,13 @@ func (Order) TableName() string {
 }
 
 func (Order) CreateOrder(order *Order) error {
-	err := dao.DB.Create(&order).Error
+	err := dao.DB.Create(order).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
 func (Order) ModifyOrder(order Order) error {
 	err := dao.DB.Updates(&order).Error
 	if err != nil {

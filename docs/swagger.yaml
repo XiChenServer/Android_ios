@@ -274,9 +274,9 @@ paths:
     post:
       description: 获取指定用户的所有商品信息
       parameters:
-      - description: 用户唯一标识
-        in: query
-        name: user_identity
+      - description: Bearer {token}
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -858,6 +858,29 @@ paths:
       summary: 用户删除商品
       tags:
       - 用户私有方法
+  /user/find/all_prolist:
+    get:
+      description: 获取指定用户的所有商品信息
+      parameters:
+      - description: 用户唯一标识
+        in: query
+        name: user_identity
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code":200,"msg":"获取商品所有信息","data":{"user_products":{}}}
+          schema:
+            type: string
+        "500":
+          description: code":500,"msg":"服务器内部错误"}
+          schema:
+            type: string
+      summary: 获取用户所有商品信息
+      tags:
+      - 商品
   /user/get/avatar:
     get:
       consumes:

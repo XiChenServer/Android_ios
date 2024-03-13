@@ -72,7 +72,7 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 
 	productNum, err := strconv.Atoi(c.Query("productNum"))
 	if err != nil {
-		log.Println("Error parsing productID:", err)
+		log.Println("Error parsing productNum:", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
 			"msg":  "无效的购买数量",
@@ -89,89 +89,74 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		return
 	}
 
+	// 开启事务
+	tx := dao.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Println("Recovered from panic:", r)
+		}
+	}()
+
+	// 查询商品信息
 	var product1 models.CommodityBasic
-	var lock sync.Mutex
-	lock.Lock()
-	if err := dao.DB.Where("id = ?", productID).Find(&product1).Error; err != nil {
+	if err := tx.Where("id = ?", productID).Find(&product1).Error; err != nil {
+		tx.Rollback()
 		log.Println("Error querying product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 400,
-			"msg":  "服务器内部错误",
-		})
-		return
-	}
-	if product1.Number < productNum {
-		log.Println("Product does not belong to the seller.")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "商品数量不够",
-		})
-		return
-	}
-	if product1.CommodityIdentity != seller.UserIdentity {
-		log.Println("Product does not belong to the seller.")
-		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
 		})
 		return
 	}
 
-	if product1.Number-productNum <= 0 {
-		product1.SoldStatus = 3 // 已经卖完
+	// 检查商品数量是否足够
+	if product1.Number-productNum < 0 {
+		tx.Rollback()
+		log.Println("Insufficient quantity of product:", product1.Title)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "商品数量不足",
+		})
+		return
 	}
-	product1.Number = product1.Number - productNum
-	err = dao.DB.Updates(&product1).Error
-	if err != nil {
+
+	// 更新商品数量
+	product1.Number -= productNum
+	if product1.Number == 0 {
+		product1.SoldStatus = 3
+	}
+
+	if err := tx.Save(&product1).Error; err != nil {
+		tx.Rollback()
 		log.Println("Error updating product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
+			"code": http.StatusInternalServerError,
+			"msg":  "更新商品数量失败",
+			"err":  err.Error(), // 返回具体的错误信息给客户端
 		})
 		return
 	}
-	lock.Unlock()
-	if product1.SoldStatus == 1 {
-		var order = &models.Order{
-			OrderIdentity:   pkg.GenerateUniqueID(),
-			BuyerIdentity:   userClaims.UserIdentity,
-			SellerIdentity:  sellerIdentity,
-			ProductIdentity: uint(productID),
-			Name:            product1.Title,
-			Price:           product1.Price,
-			Quantity:        product1.Number,
-			Msg:             product1.Information,
-			Buyer:           buyer,
-			Seller:          seller,
-			Product:         product1,
-			Status:          1,
-		}
 
-		err = models.Order{}.CreateOrder(order)
-		if err != nil {
-			log.Println("Error creating order:", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code": 500,
-				"msg":  "服务器内部错误",
-			})
-			return
-		}
+	// 创建订单
+	var order = &models.Order{
+		OrderIdentity:   pkg.GenerateUniqueID(),
+		BuyerIdentity:   userClaims.UserIdentity,
+		SellerIdentity:  sellerIdentity,
+		ProductIdentity: uint(productID),
+		Name:            product1.Title,
+		Price:           product1.Price,
+		Quantity:        productNum,
+		Msg:             product1.Information,
+		Buyer:           buyer,
+		Seller:          seller,
+		Product:         product1,
+		Status:          1,
+	}
 
-		// 订单创建成功后发送消息到 Kafka
-		topic := "order-created"
-		message := fmt.Sprintf("Order created: %s", order.OrderIdentity)
-
-		err = dao.ProduceMessage(topic, message)
-		if err != nil {
-			log.Println("Error producing Kafka message: ", err)
-			// 处理消息发送失败的情况
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"code": 200,
-			"msg":  "订单创建完成",
-		})
-		return
-	} else {
+	if err := tx.Create(order).Error; err != nil {
+		tx.Rollback()
+		log.Println("Error creating order:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 			"msg":  "服务器内部错误",
@@ -179,6 +164,30 @@ func (OrderBasicServer) UserCreateOrder(c *gin.Context) {
 		return
 	}
 
+	// 订单创建成功后发送消息到 Kafka
+	topic := "order-created"
+	message := fmt.Sprintf("Order created: %s", order.OrderIdentity)
+
+	if err := dao.ProduceMessage(topic, message); err != nil {
+		log.Println("Error producing Kafka message: ", err)
+		// 处理消息发送失败的情况
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		log.Println("Error committing transaction:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "事务提交失败",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "订单创建完成",
+	})
 }
 
 // UserDeleteOrder 删除订单接口

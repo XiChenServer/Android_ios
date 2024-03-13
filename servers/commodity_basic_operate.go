@@ -317,12 +317,79 @@ func (CommodityServer) GetOneProAllInfo(c *gin.Context) {
 	})
 }
 
-// GetUserAllProList godoc
+// UserFindAllProList godoc
 // @Summary 获取用户所有商品信息
 // @Description 获取指定用户的所有商品信息
 // @Tags 商品
 // @Produce json
 // @Param user_identity query string true "用户唯一标识"
+// @Success 200 {string} json {"code":200,"msg":"获取商品所有信息","data":{"user_products":{}}}
+// @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
+// @Router /user/find/all_prolist [get]
+func (CommodityServer) UserFindAllProList(c *gin.Context) {
+
+	// Parse user information
+	userClaim, exists := c.Get(pkg.UserClaimsContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "未授权",
+		})
+		return
+	}
+	userClaims, ok := userClaim.(*pkg.UserClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "msg": "请求错误"})
+		return
+	}
+	identity := userClaims.UserIdentity
+	fmt.Println(identity)
+	var count int64
+	var user models.UserBasic
+	if err := dao.DB.
+		Preload("Commodity", func(db *gorm.DB) *gorm.DB {
+			return db.Order("updated_at DESC") // 假设CommodityBasic有一个UpdatedAt字段
+		}).
+		Select("avatar, user_identity, nickname, account, phone_number, score, name, email, wechat_number").
+		Where("user_identity = ?", identity).
+		First(&user).Count(&count).Error; err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": "500",
+			"msg":  "服务器内部错误",
+		})
+		return
+	}
+
+	// 手动预加载Commodities中的Categories关联数据
+	for i := range user.Commodity {
+		if err := dao.DB.Model(&user.Commodity[i]).Preload("Categories", func(db *gorm.DB) *gorm.DB {
+			return db.Select("name, kind_identity")
+		}).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code": "500",
+				"msg":  "服务器内部错误",
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"msg":  "获取商品所有信息",
+		"data": map[string]interface{}{
+			"count":         count,
+			"user_products": user,
+		},
+	})
+}
+
+// GetUserAllProList godoc
+// @Summary 获取用户所有商品信息
+// @Description 获取指定用户的所有商品信息
+// @Tags 商品
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
 // @Success 200 {string} json {"code":200,"msg":"获取商品所有信息","data":{"user_products":{}}}
 // @Failure 500 {string} json {"code":500,"msg":"服务器内部错误"}
 // @Router /get/user_all_pro_list [post]

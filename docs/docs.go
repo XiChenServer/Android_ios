@@ -289,9 +289,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户唯一标识",
-                        "name": "user_identity",
-                        "in": "query",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -1142,6 +1142,41 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "code\": \"500\", \"msg\": \"服务器内部错误\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/find/all_prolist": {
+            "get": {
+                "description": "获取指定用户的所有商品信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "获取用户所有商品信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户唯一标识",
+                        "name": "user_identity",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code\":200,\"msg\":\"获取商品所有信息\",\"data\":{\"user_products\":{}}}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "code\":500,\"msg\":\"服务器内部错误\"}",
                         "schema": {
                             "type": "string"
                         }

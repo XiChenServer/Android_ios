@@ -70,6 +70,7 @@ func Router() *gin.Engine {
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 
+		user.GET("/find/all_prolist", servers.CommodityServer{}.UserFindAllProList)
 		user.GET("/auction/info", servers.BidRecordServer{}.FindUserAuctionInfo)
 		user.POST("/bid", servers.BidRecordServer{}.BidRecord)
 
