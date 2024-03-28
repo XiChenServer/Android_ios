@@ -4,6 +4,7 @@ import (
 	"Android_ios/dao"
 	"Android_ios/models"
 	"Android_ios/pkg"
+	"Android_ios/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -30,6 +31,11 @@ func (AdminServer) AddNewCategoryInfo(c *gin.Context) {
 	newCategory.ParentID = 1
 	// 检查数据库中是否已经存在相同名称的分类
 	var existingCategory models.KindBasic
+	existingCategory, err := models.KindBasic{}.FindKindByIdentity(name)
+	if err != nil {
+
+	}
+
 	if err := dao.DB.Where("name = ?", name).First(&existingCategory).Error; err == nil {
 		// 如果存在相同名称的分类，返回错误响应
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "分类已存在"})
@@ -60,10 +66,12 @@ func (AdminServer) AddNewCategoryInfo(c *gin.Context) {
 func (AdminServer) AddNewSonCategoryInfo(c *gin.Context) {
 	var newCategory models.KindBasic
 	identity := c.Query("identity")
+
 	var parentCategory models.KindBasic
-	if err := dao.DB.Where("kind_identity = ?", identity).Find(&parentCategory).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"code": 404, "msg": "父分类没有找到"})
-		return
+
+	parentCategory, err := models.KindBasic{}.FindKindByIdentity(identity)
+	if err != nil {
+		utils.Admin{}.AdminServer(c, http.StatusNotFound, "父分类没有找到")
 	}
 
 	name := c.Query("name")
@@ -73,20 +81,20 @@ func (AdminServer) AddNewSonCategoryInfo(c *gin.Context) {
 	newCategory.ParentID = parentCategory.ID
 
 	// 检查数据库中是否已经存在相同名称的子分类
-	var existingCategory models.KindBasic
-	if err := dao.DB.Where("name = ? AND parent_id = ?", name, parentCategory.ID).First(&existingCategory).Error; err == nil {
+	_, err = models.KindBasic{}.FindKindByKindNameAndParentId(name, parentCategory.ID)
+	if err != nil {
 		// 如果存在相同名称的子分类，返回错误响应
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "子分类已存在"})
+		utils.Admin{}.AdminServer(c, http.StatusBadRequest, "子分类已存在")
 		return
 	}
 
 	// 将新的子分类的 ParentID 为父分类的 ID
-	result := dao.DB.Create(&newCategory)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "服务器内部错误"})
+	err = models.KindBasic{}.CreateKind(newCategory)
+	if err != nil {
+		utils.Admin{}.AdminServer(c, http.StatusInternalServerError, "创建分类失败")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "新的分类创建完成"})
+	utils.Admin{}.AdminServer(c, http.StatusOK, "新的分类创建完成")
 }
 
 // GetAllCategoryList godoc
@@ -99,12 +107,11 @@ func (AdminServer) AddNewSonCategoryInfo(c *gin.Context) {
 // @Failure 500 {string} json {"code": 500, "msg": "服务器内部错误"}
 // @Router /admin/get/all_list_categories [get]
 func (AdminServer) GetAllCategoryList(c *gin.Context) {
-	var categories []models.KindBasic
-	result := dao.DB.Find(&categories)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "服务器内部错误"})
+	var categories *[]models.KindBasic
+	categories, err = models.KindBasic{}.GetKindBasicLink()
+	if err != nil {
+		utils.Admin{}.AdminServerAndData(c, http.StatusInternalServerError, "获取分类信息失败", nil)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "获取分类信息成功", "data": categories})
-
+	utils.Admin{}.AdminServerAndData(c, http.StatusOK, "获取分类信息成功", categories)
 }

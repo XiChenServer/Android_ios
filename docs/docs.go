@@ -3328,7 +3328,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "8.130.86.26:13000",
+	Host:             "127.0.0.1:13000",
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "牧牛流马(Herding_cattle_and_straying_horses)",

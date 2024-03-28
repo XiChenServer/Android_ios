@@ -19,8 +19,17 @@ func (KindBasic) TableName() string {
 	return "kind_basic"
 }
 
-func (KindBasic) GetKindBasicLink() (*KindBasic, error) {
-	var kindBasic KindBasic
+// 接下来对于数据库中的操作进行分装
+
+// 查找分类，根据唯一标识
+func (KindBasic) FindKindByIdentity(identity string) (KindBasic, error) {
+	var newCategory KindBasic
+	err := dao.DB.Where("kind_identity = ?", identity).Find(&newCategory).Error
+	return newCategory, err
+}
+
+func (KindBasic) GetKindBasicLink() (*[]KindBasic, error) {
+	var kindBasic []KindBasic
 	err := dao.DB.First(&kindBasic).Error
 	return &kindBasic, err
 }
@@ -44,11 +53,23 @@ func IsValidType(typeName string) bool {
 	return true
 }
 
-// 在 KindBasic 模型中添加 FindKindByKindIdentity 方法
-func (kb *KindBasic) FindKindByKindIdentity(name string) (*KindBasic, error) {
+// 在 KindBasic 模型中添加 FindKindByKindName 方法
+func (kb *KindBasic) FindKindByKindName(name string) (*KindBasic, error) {
 	var kind KindBasic
 	if err := dao.DB.Where("name = ?", name).First(&kind).Error; err != nil {
 		return nil, err
 	}
 	return &kind, nil
+}
+
+func (KindBasic) FindKindByKindNameAndParentId(name string, parent_id uint) (KindBasic, error) {
+	var kind KindBasic
+	err := dao.DB.Where("name = ? AND parent_id = ?", name, parent_id).First(&kind).Error
+	return kind, err
+}
+
+// 创键分类
+func (KindBasic) CreateKind(basic KindBasic) error {
+	err := dao.DB.Create(&basic).Error
+	return err
 }

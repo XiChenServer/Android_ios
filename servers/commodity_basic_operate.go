@@ -220,7 +220,7 @@ func validateAndAssociateTypes(types []string) ([]*models.KindBasic, error) {
 	var categories []*models.KindBasic
 	for _, t := range types {
 		basic := models.KindBasic{}
-		kind, err := basic.FindKindByKindIdentity(t)
+		kind, err := basic.FindKindByKindName(t)
 		if err != nil {
 			return nil, fmt.Errorf("无效的商品类型：%s", t)
 		}
