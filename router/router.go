@@ -6,9 +6,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/juju/ratelimit"
 	swaggerFiles "github.com/swaggo/files"
 	gs "github.com/swaggo/gin-swagger"
 	"net/http"
+	"time"
 )
 
 var upGrader = websocket.Upgrader{
@@ -19,6 +21,9 @@ var upGrader = websocket.Upgrader{
 
 func Router() *gin.Engine {
 	r := gin.Default()
+
+	// 使用限流中间件，每秒允许10个请求
+	r.Use(RateLimitMiddleware(10, 10))
 
 	// 静态文件服务，用于提供静态图片文件的访问服务
 	r.StaticFS("/picture", gin.Dir("picture", true))
@@ -174,4 +179,16 @@ func Router() *gin.Engine {
 	}
 
 	return r
+}
+
+func RateLimitMiddleware(rate int, capacity int64) gin.HandlerFunc {
+	bucket := ratelimit.NewBucket(time.Second*time.Duration(rate), capacity)
+	return func(c *gin.Context) {
+		if bucket.TakeAvailable(1) < 1 {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Rate limit exceeded"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }

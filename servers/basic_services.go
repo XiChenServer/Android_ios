@@ -4,6 +4,7 @@ import (
 	"Android_ios/dao"
 	"Android_ios/models"
 	"Android_ios/pkg"
+	"Android_ios/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -33,35 +34,25 @@ func (BasicServer) SendPhoneCode(c *gin.Context) {
 	var user Basic
 	// 使用 ShouldBindJSON 解析 JSON 请求体
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "请求无效。服务器无法理解请求",
-		})
+		utils.BasicServer{}.SendCodeServer(c, http.StatusBadRequest, "请求无效，服务器无法理解请求")
 		return
 	}
 
 	code := pkg.GetRandCode()
 	err = dao.RDB.Set(c, user.PhoneNumber, code, 300*time.Second).Err()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误,未能存储到redis",
-		})
+		utils.BasicServer{}.SendCodeServer(c, http.StatusInternalServerError, "服务器内部错误,未能存储到redis")
 		return
 	}
 
 	err := pkg.SendPhoneCode(user.PhoneNumber, code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误，阿里云发送失败",
-		})
+		utils.BasicServer{}.SendCodeServer(c, http.StatusInternalServerError, "服务器内部错误，阿里云发送失败")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "验证码已经成功发送",
-	})
+
+	utils.BasicServer{}.SendCodeServer(c, http.StatusOK, "验证码已经成功发送")
+
 	return
 }
 
@@ -80,25 +71,17 @@ func (BasicServer) SendEmailCode(c *gin.Context) {
 	code := pkg.GetRandCode()
 	err := pkg.SendEmailVerificationCode(email, code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
-		})
+
+		utils.BasicServer{}.SendCodeServer(c, http.StatusInternalServerError, "阿里云后台响应出现问题")
 		return
 	}
 
 	err = dao.RDB.Set(c, email, code, 300*time.Second).Err()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
-		})
+		utils.BasicServer{}.SendCodeServer(c, http.StatusInternalServerError, "redis未能存储信息")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "验证码已经成功发送",
-	})
+	utils.BasicServer{}.SendCodeServer(c, http.StatusOK, "验证码已经成功发送")
 	return
 }
 
@@ -106,10 +89,7 @@ func (BasicServer) RenewUserChat(c *gin.Context) {
 	var users []models.UserBasic
 	err := dao.DB.Find(&users).Error
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "服务器内部错误",
-		})
+		utils.BasicServer{}.SendCodeServer(c, http.StatusInternalServerError, "查找数据库失败")
 		return
 	}
 
@@ -117,6 +97,7 @@ func (BasicServer) RenewUserChat(c *gin.Context) {
 		fmt.Println(user)
 		err := models.UserChatBasic{}.CreateUser(user).Error
 		if err != nil {
+
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code": 500,
 				"msg":  "服务器内部错误",
